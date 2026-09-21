@@ -102,11 +102,20 @@ interface AppContextType {
     ssCount: number;
   };
 
-  // Settings & Audit
+  // Settings & Audit / Notifications
   schoolSettings: SchoolSettings;
   updateSchoolSettings: (settings: Partial<SchoolSettings>) => void;
   auditLogs: AuditLog[];
-  logAudit: (action: string, affectedRecord: string, description: string, severity?: 'info' | 'warning' | 'critical') => void;
+  unreadLogsCount: number;
+  markLogAsRead: (id: string) => void;
+  markAllLogsAsRead: () => void;
+  logAudit: (
+    action: string,
+    affectedRecord: string,
+    description: string,
+    severity?: 'info' | 'warning' | 'critical',
+    category?: 'USER' | 'YEAR' | 'COLUMN' | 'STUDENT' | 'FINANCIAL' | 'SYSTEM' | string
+  ) => void;
 
   // Permissions
   hasPermission: (perm: 'manageUsers' | 'manageClasses' | 'manageSessions' | 'manageFees' | 'editStudent' | 'deleteStudent' | 'recordPayment' | 'voidPayment' | 'viewReports' | 'viewAudit' | 'settings') => boolean;
@@ -188,12 +197,13 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     setToasts((prev) => prev.filter((t) => t.id !== id));
   };
 
-  // Audit logging helper
+  // Audit logging & change notification helper
   const logAudit = (
     action: string,
     affectedRecord: string,
     description: string,
-    severity: 'info' | 'warning' | 'critical' = 'info'
+    severity: 'info' | 'warning' | 'critical' = 'info',
+    category: 'USER' | 'YEAR' | 'COLUMN' | 'STUDENT' | 'FINANCIAL' | 'SYSTEM' | string = 'SYSTEM'
   ) => {
     const { date, time } = getCurrentNigeriaDateTime();
     const newLog: AuditLog = {
@@ -201,16 +211,35 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       timestamp: new Date().toISOString(),
       date,
       time,
-      user: currentUser ? currentUser.name : 'System',
-      userId: currentUser ? currentUser.id : 'usr-system',
+      user: currentUser ? currentUser.name : 'Golden Nwonu',
+      userName: currentUser ? currentUser.name : 'Golden Nwonu',
+      userEmail: currentUser ? currentUser.email : 'goldennwonu@gmail.com',
+      userId: currentUser ? currentUser.id : 'usr-golden-nwonu',
       userRole: currentUser ? currentUser.role : 'Super Admin',
       action,
       affectedRecord,
       description,
+      category,
       severity,
+      read: false,
     };
     setAuditLogs((prev) => [newLog, ...prev]);
   };
+
+  const markLogAsRead = (id: string) => {
+    setAuditLogs((prev) =>
+      prev.map((log) => (log.id === id ? { ...log, read: true } : log))
+    );
+  };
+
+  const markAllLogsAsRead = () => {
+    setAuditLogs((prev) => prev.map((log) => ({ ...log, read: true })));
+    notify('All activity change notifications marked as read.', 'info');
+  };
+
+  const unreadLogsCount = useMemo(() => {
+    return auditLogs.filter((l) => !l.read).length;
+  }, [auditLogs]);
 
   // Permission checks
   const hasPermission = (perm: 'manageUsers' | 'manageClasses' | 'manageSessions' | 'manageFees' | 'editStudent' | 'deleteStudent' | 'recordPayment' | 'voidPayment' | 'viewReports' | 'viewAudit' | 'settings'): boolean => {
@@ -310,7 +339,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       lastLogin: 'Never',
     };
     setUsers((prev) => [...prev, newUser]);
-    logAudit('User Created', newUser.email, `Created user ${newUser.name} with role ${newUser.role}`);
+    logAudit('User Created', newUser.email, `Created user ${newUser.name} with role ${newUser.role}`, 'info', 'USER');
     notify(`User ${newUser.name} added successfully. Invitation sent to ${newUser.email}.`, 'success');
   };
 
@@ -324,7 +353,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     }
 
     setUsers((prev) => prev.map((u) => (u.id === id ? { ...u, ...updates } : u)));
-    logAudit('User Updated', targetUser.email, `Updated user details for ${targetUser.name}`);
+    logAudit('User Updated', targetUser.email, `Updated user details for ${targetUser.name}`, 'info', 'USER');
     notify('User updated successfully.', 'success');
   };
 
@@ -336,7 +365,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       return;
     }
     setUsers((prev) => prev.filter((u) => u.id !== id));
-    logAudit('User Deleted', targetUser.email, `Deleted user ${targetUser.name}`, 'warning');
+    logAudit('User Deleted', targetUser.email, `Deleted user ${targetUser.name}`, 'warning', 'USER');
     notify(`User ${targetUser.name} deleted.`, 'info');
   };
 
@@ -347,7 +376,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       notify('Only the main Admin/Director can reset the main admin password.', 'error');
       return;
     }
-    logAudit('Password Reset', targetUser.email, `Admin triggered password reset for ${targetUser.name}`);
+    logAudit('Password Reset', targetUser.email, `Admin triggered password reset for ${targetUser.name}`, 'warning', 'USER');
     notify(`Password reset link dispatched to ${targetUser.email}. Temporary PIN: 123456`, 'success');
   };
 
@@ -356,7 +385,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     const id = `cls-${Date.now()}`;
     const newClass: SchoolClass = { ...cls, id };
     setClasses((prev) => [...prev, newClass]);
-    logAudit('Class Created', newClass.name, `Added new class ${newClass.name} under ${newClass.section}`);
+    logAudit('Class Created', newClass.name, `Added new class ${newClass.name} under ${newClass.section}`, 'info', 'SYSTEM');
     notify(`Class ${newClass.name} added successfully.`, 'success');
   };
 
@@ -374,7 +403,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         isActive: s.id === sessionName,
       }))
     );
-    logAudit('Active Session Changed', sessionName, `Switched active academic session to ${sessionName}`);
+    logAudit('Active Session Changed', sessionName, `Switched active academic session to ${sessionName}`, 'info', 'YEAR');
     notify(`Active session switched to ${sessionName}`, 'info');
   };
 
@@ -389,7 +418,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         })),
       }))
     );
-    logAudit('Active Term Changed', termName, `Switched active term to ${termName}`);
+    logAudit('Active Term Changed', termName, `Switched active term to ${termName}`, 'info', 'YEAR');
     notify(`Active term switched to ${termName}`, 'info');
   };
 
@@ -409,8 +438,8 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       ],
     };
     setSessions((prev) => [newSession, ...prev]);
-    logAudit('Session Created', sessionName, `Created new academic session ${sessionName}`);
-    notify(`Session ${sessionName} created successfully.`, 'success');
+    logAudit('Session Created', sessionName, `Created new academic year/session ${sessionName}`, 'info', 'YEAR');
+    notify(`Academic session/year ${sessionName} created successfully.`, 'success');
   };
 
   const createSession = (data: { id: string; startDate?: string; endDate?: string }) => {
@@ -476,7 +505,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       setFeeAssignments((prev) => [...prev, ...newAssignments]);
     }
 
-    logAudit('Student Registered', `${fullName} (${newId})`, `Admitted ${fullName} into ${studentData.className}`);
+    logAudit('Student Registered', `${fullName} (${newId})`, `Admitted ${fullName} into ${studentData.className}`, 'info', 'STUDENT');
     notify(`Student ${fullName} registered with ID ${newId}`, 'success');
     return newStudent;
   };
@@ -492,7 +521,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         return s;
       })
     );
-    logAudit('Student Edited', id, `Updated student profile information for ID ${id}`);
+    logAudit('Student Edited', id, `Updated student profile information for ID ${id}`, 'info', 'STUDENT');
     notify('Student record updated successfully.', 'success');
   };
 
@@ -503,7 +532,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     }
     const student = students.find((s) => s.id === id);
     setStudents((prev) => prev.filter((s) => s.id !== id));
-    logAudit('Student Deleted', id, `Deleted student ${student?.fullName || id}`, 'critical');
+    logAudit('Student Deleted', id, `Deleted student ${student?.fullName || id}`, 'critical', 'STUDENT');
     notify(`Student ${student?.fullName || id} deleted.`, 'info');
   };
 
@@ -523,7 +552,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     });
 
     setStudents((prev) => [...prev, ...created]);
-    logAudit('Bulk Student Import', `${count} students`, `Imported ${count} student records via CSV/Excel template.`);
+    logAudit('Bulk Student Import', `${count} students`, `Imported ${count} student records via CSV/Excel template.`, 'info', 'STUDENT');
     notify(`Successfully imported ${count} students.`, 'success');
     return count;
   };
@@ -541,26 +570,28 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     notify('Parent record saved.', 'success');
   };
 
-  // Fees & Categories
+  // Fees & Categories (Spreadsheet Columns)
   const addFeeCategory = (cat: Omit<FeeCategory, 'id'>): FeeCategory => {
     const id = `fee-${Date.now()}`;
     const newCat: FeeCategory = { ...cat, id };
     setFeeCategories((prev) => [...prev, newCat]);
-    logAudit('Fee Category Created', newCat.name, `Created fee category ${newCat.name} with default amount ₦${newCat.defaultAmount}`);
-    notify(`Fee category "${newCat.name}" created.`, 'success');
+    logAudit('Fee Column Created', newCat.name, `Created fee column "${newCat.name}" with default amount ₦${newCat.defaultAmount.toLocaleString()}`, 'info', 'COLUMN');
+    notify(`Fee column "${newCat.name}" added to spreadsheet.`, 'success');
     return newCat;
   };
 
   const updateFeeCategory = (id: string, updates: Partial<FeeCategory>) => {
+    const cat = feeCategories.find((c) => c.id === id);
     setFeeCategories((prev) => prev.map((c) => (c.id === id ? { ...c, ...updates } : c)));
-    notify('Fee category updated.', 'success');
+    logAudit('Fee Column Updated', updates.name || cat?.name || id, `Updated fee column settings for ${updates.name || cat?.name || id}`, 'info', 'COLUMN');
+    notify('Fee column updated.', 'success');
   };
 
   const deleteFeeCategory = (id: string) => {
     const cat = feeCategories.find((c) => c.id === id);
     setFeeCategories((prev) => prev.filter((c) => c.id !== id));
-    logAudit('Fee Category Deleted', cat?.name || id, `Deleted fee category ${cat?.name || id}`);
-    notify(`Fee category deleted.`, 'info');
+    logAudit('Fee Column Deleted', cat?.name || id, `Deleted fee column "${cat?.name || id}"`, 'warning', 'COLUMN');
+    notify(`Fee column deleted.`, 'info');
   };
 
   const setStudentFeeAmount = (studentId: string, categoryId: string, amount: number) => {
@@ -594,7 +625,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       }
     });
 
-    logAudit('Fee Amount Updated', `${studentId} - ${categoryId}`, `Adjusted fee amount to ₦${amount}`);
+    logAudit('Fee Amount Updated', `${studentId} - ${categoryId}`, `Adjusted fee amount to ₦${amount.toLocaleString()}`, 'info', 'COLUMN');
   };
 
   const bulkAssignClassFees = (classId: string, feeItems: { categoryId: string; amount: number }[]) => {
@@ -796,7 +827,9 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     logAudit(
       'Payment Recorded',
       `${receiptNumber} (${student.fullName})`,
-      `Recorded payment of ₦${paymentData.amount.toLocaleString()} for ${student.fullName} via ${paymentData.paymentMethod}.`
+      `Recorded payment of ₦${paymentData.amount.toLocaleString()} for ${student.fullName} via ${paymentData.paymentMethod}.`,
+      'info',
+      'FINANCIAL'
     );
 
     notify(`Payment of ₦${paymentData.amount.toLocaleString()} recorded successfully! Receipt: ${receiptNumber}`, 'success');
@@ -838,7 +871,8 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       'Payment Voided',
       payment.receiptNumber,
       `Voided transaction of ₦${payment.amount.toLocaleString()} for ${payment.studentName}. Reason: ${reason}`,
-      'critical'
+      'critical',
+      'FINANCIAL'
     );
 
     notify(`Transaction ${payment.receiptNumber} successfully VOIDED. Financial audit preserved.`, 'info');
@@ -848,7 +882,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   // School Settings
   const updateSchoolSettings = (updates: Partial<SchoolSettings>) => {
     setSchoolSettings((prev) => ({ ...prev, ...updates }));
-    logAudit('Settings Changed', 'School Configuration', 'Updated school contact, motto or prefixes');
+    logAudit('Settings Changed', 'School Configuration', 'Updated school contact, motto or prefixes', 'info', 'SYSTEM');
     notify('School settings saved.', 'success');
   };
 
@@ -930,6 +964,9 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         schoolSettings,
         updateSchoolSettings,
         auditLogs,
+        unreadLogsCount,
+        markLogAsRead,
+        markAllLogsAsRead,
         logAudit,
 
         hasPermission,

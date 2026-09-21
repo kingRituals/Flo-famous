@@ -16,6 +16,7 @@ import {
   LogOut,
   X,
   School,
+  Bell,
 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 
@@ -31,6 +32,7 @@ export type ActiveNavTab =
   | 'reports'
   | 'sessions'
   | 'users'
+  | 'notifications'
   | 'audit-logs'
   | 'settings';
 
@@ -47,11 +49,12 @@ export const Sidebar: React.FC<SidebarProps> = ({
   isOpenMobile,
   onCloseMobile,
 }) => {
-  const { currentUser, logout, schoolSettings, activeSession, activeTerm, hasPermission } = useApp();
+  const { currentUser, logout, schoolSettings, activeSession, activeTerm, hasPermission, unreadLogsCount } = useApp();
 
   const navItems = [
     { id: 'dashboard' as ActiveNavTab, label: 'Dashboard', icon: LayoutDashboard, permitted: true },
     { id: 'excel-table' as ActiveNavTab, label: 'Excel Fee Table', icon: Table, permitted: true, badge: 'Live Excel' },
+    { id: 'notifications' as ActiveNavTab, label: 'Notifications & Activity', icon: Bell, permitted: true, count: unreadLogsCount },
     { id: 'students' as ActiveNavTab, label: 'Students Directory', icon: GraduationCap, permitted: true },
     { id: 'payments' as ActiveNavTab, label: 'Payments & Receipts', icon: Receipt, permitted: true },
     { id: 'outstanding' as ActiveNavTab, label: 'Outstanding Fees', icon: AlertCircle, permitted: true },
@@ -164,6 +167,11 @@ export const Sidebar: React.FC<SidebarProps> = ({
                       }`}
                     >
                       {item.badge}
+                    </span>
+                  )}
+                  {item.count !== undefined && item.count > 0 && (
+                    <span className="text-[10px] px-2 py-0.5 rounded-full font-bold bg-rose-600 text-white animate-pulse">
+                      {item.count}
                     </span>
                   )}
                 </button>

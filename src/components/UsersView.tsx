@@ -46,6 +46,11 @@ export const UsersView: React.FC = () => {
       notify('You cannot deactivate your own logged-in account.', 'warning');
       return;
     }
+    const targetUser = users.find((u) => u.id === userId);
+    if (targetUser?.isMainAdmin || targetUser?.email === 'goldennwonu@gmail.com') {
+      notify('The host administrator account cannot be deactivated.', 'error');
+      return;
+    }
     const newStatus: UserStatus = currentStatus === 'Active' ? 'Inactive' : 'Active';
     updateUser(userId, { status: newStatus });
     notify(`Account status updated to ${newStatus}.`, 'info');
@@ -150,6 +155,11 @@ export const UsersView: React.FC = () => {
                       {u.name.charAt(0)}
                     </div>
                     <span>{u.name}</span>
+                    {(u.isMainAdmin || u.email === 'goldennwonu@gmail.com') && (
+                      <span className="px-1.5 py-0.5 rounded text-[9px] font-extrabold bg-amber-100 text-amber-900 border border-amber-300">
+                        Host Admin
+                      </span>
+                    )}
                   </td>
                   <td className="p-3 font-mono text-slate-600 whitespace-nowrap">{u.email}</td>
                   <td className="p-3 whitespace-nowrap">
@@ -180,17 +190,23 @@ export const UsersView: React.FC = () => {
                   </td>
                   <td className="p-3 text-slate-500 whitespace-nowrap">{u.createdAt}</td>
                   <td className="p-3 text-center whitespace-nowrap">
-                    {hasPermission('manageUsers') && (
-                      <button
-                        onClick={() => handleToggleStatus(u.id, u.status)}
-                        className={`px-2.5 py-1 rounded-lg text-[11px] font-bold transition-colors ${
-                          u.status === 'Active'
-                            ? 'bg-rose-50 text-rose-700 hover:bg-rose-100'
-                            : 'bg-emerald-50 text-emerald-700 hover:bg-emerald-100'
-                        }`}
-                      >
-                        {u.status === 'Active' ? 'Deactivate' : 'Activate'}
-                      </button>
+                    {u.isMainAdmin || u.email === 'goldennwonu@gmail.com' ? (
+                      <span className="text-[10px] text-slate-400 font-semibold italic">
+                        Host Admin (Primary)
+                      </span>
+                    ) : (
+                      hasPermission('manageUsers') && (
+                        <button
+                          onClick={() => handleToggleStatus(u.id, u.status)}
+                          className={`px-2.5 py-1 rounded-lg text-[11px] font-bold transition-colors ${
+                            u.status === 'Active'
+                              ? 'bg-rose-50 text-rose-700 hover:bg-rose-100'
+                              : 'bg-emerald-50 text-emerald-700 hover:bg-emerald-100'
+                          }`}
+                        >
+                          {u.status === 'Active' ? 'Deactivate' : 'Activate'}
+                        </button>
+                      )
                     )}
                   </td>
                 </tr>

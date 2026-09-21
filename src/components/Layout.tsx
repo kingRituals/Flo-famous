@@ -12,6 +12,7 @@ import { ParentsView } from './ParentsView';
 import { ReportsView } from './ReportsView';
 import { SessionsView } from './SessionsView';
 import { UsersView } from './UsersView';
+import { NotificationsView } from './NotificationsView';
 import { AuditLogsView } from './AuditLogsView';
 import { SettingsView } from './SettingsView';
 import { PaymentReceiptModal } from './PaymentReceiptModal';
@@ -66,6 +67,7 @@ export const Layout: React.FC = () => {
           onOpenMobileSidebar={() => setIsMobileSidebarOpen(true)}
           onGlobalSearchSelect={handleGlobalSearchSelect}
           onOpenAddStudentModal={() => setIsAddStudentOpen(true)}
+          onNavigateToNotifications={() => setCurrentTab('notifications')}
         />
 
         {/* Dynamic Content View Container */}
@@ -74,6 +76,7 @@ export const Layout: React.FC = () => {
             <DashboardView onNavigateToTab={(tab) => setCurrentTab(tab)} />
           )}
           {currentTab === 'excel-table' && <ExcelFeeTableView />}
+          {currentTab === 'notifications' && <NotificationsView />}
           {currentTab === 'students' && (
             <StudentsView
               onOpenAddModal={() => setIsAddStudentOpen(true)}

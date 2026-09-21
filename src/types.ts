@@ -156,6 +156,7 @@ export interface AuditLog {
   time: string;
   user: string;
   userName?: string;
+  userEmail?: string;
   userId: string;
   userRole: UserRole;
   action: string;
@@ -163,9 +164,10 @@ export interface AuditLog {
   studentId?: string;
   description: string;
   details?: string;
-  category?: 'FINANCIAL' | 'STUDENT' | 'FEE' | 'AUTH' | 'SYSTEM' | string;
+  category?: 'FINANCIAL' | 'STUDENT' | 'FEE' | 'AUTH' | 'SYSTEM' | 'USER' | 'YEAR' | 'COLUMN' | string;
   ipAddress?: string;
   severity?: 'info' | 'warning' | 'critical';
+  read?: boolean;
 }
 
 export interface SchoolSettings {

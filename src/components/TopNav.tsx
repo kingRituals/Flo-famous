@@ -8,6 +8,7 @@ import {
   Calendar,
   UserCircle2,
   RefreshCw,
+  Bell,
 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import { UserRole } from '../types';
@@ -16,12 +17,14 @@ interface TopNavProps {
   onOpenMobileSidebar: () => void;
   onGlobalSearchSelect: (studentId: string) => void;
   onOpenAddStudentModal: () => void;
+  onNavigateToNotifications?: () => void;
 }
 
 export const TopNav: React.FC<TopNavProps> = ({
   onOpenMobileSidebar,
   onGlobalSearchSelect,
   onOpenAddStudentModal,
+  onNavigateToNotifications,
 }) => {
   const {
     currentUser,
@@ -36,6 +39,7 @@ export const TopNav: React.FC<TopNavProps> = ({
     openRecordPayment,
     hasPermission,
     notify,
+    unreadLogsCount,
   } = useApp();
 
   const [searchQuery, setSearchQuery] = useState('');
@@ -199,6 +203,21 @@ export const TopNav: React.FC<TopNavProps> = ({
             <span>Add Student</span>
           </button>
         )}
+
+        {/* Notifications Bell Button */}
+        <button
+          id="btn-top-notifications"
+          onClick={onNavigateToNotifications}
+          className="relative p-2 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 transition-colors"
+          title="System Notifications & Change Log"
+        >
+          <Bell className="w-4 h-4 text-emerald-800" />
+          {unreadLogsCount > 0 && (
+            <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 bg-rose-600 text-white rounded-full text-[10px] font-bold flex items-center justify-center border-2 border-white animate-pulse">
+              {unreadLogsCount}
+            </span>
+          )}
+        </button>
 
         {/* Role Switcher Demo Dropdown */}
         <div className="relative">
