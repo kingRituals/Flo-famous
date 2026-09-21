@@ -1,0 +1,6 @@
+{
+  "name": "FLO Famous School Management System",
+  "description": "Comprehensive school administration, fee management, live spreadsheet accounting, student records, and financial reporting for FLO Famous Secondary and Primary School, Nigeria.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
