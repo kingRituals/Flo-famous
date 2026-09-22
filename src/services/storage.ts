@@ -10,6 +10,7 @@ import {
   SchoolSettings,
   Student,
   StudentFeeAssignment,
+  UserRole,
 } from '../types';
 
 const STORAGE_KEYS = {
@@ -65,48 +66,48 @@ const INITIAL_SESSIONS: AcademicSession[] = [
   },
 ];
 
-// Host Admin & Authorized Staff
+// Authorized Staff Profiles - Strictly Titles: Admin, Accounts, Cashier, Teacher
 const INITIAL_USERS: AppUser[] = [
   {
-    id: 'usr-golden-nwonu',
-    name: 'Golden Nwonu',
-    email: 'goldennwonu@gmail.com',
-    username: 'goldennwonu',
-    role: 'Super Admin',
+    id: 'usr-admin',
+    name: 'Admin',
+    email: 'flofamous.edu.ng',
+    username: 'admin',
+    role: 'Admin',
     status: 'Active',
-    password: 'admin123',
+    password: 'Flo1234',
     createdAt: '2026-09-21',
     lastLogin: '2026-09-21 09:00:00 AM',
     isMainAdmin: true,
   },
   {
-    id: 'usr-bursar',
-    name: 'Mrs. Chioma Eze',
-    email: 'bursar@flofamous.edu.ng',
-    username: 'bursar',
-    role: 'Accountant',
+    id: 'usr-accounts',
+    name: 'Accounts',
+    email: 'accounts@flofamous.edu.ng',
+    username: 'accounts',
+    role: 'Accounts',
     status: 'Active',
-    password: 'admin123',
+    password: 'Flo1234',
     createdAt: '2026-09-21',
   },
   {
-    id: 'usr-registrar',
-    name: 'Mr. Babatunde Nwachukwu',
-    email: 'registrar@flofamous.edu.ng',
-    username: 'registrar',
-    role: 'Registrar',
+    id: 'usr-cashier',
+    name: 'Cashier',
+    email: 'cashier@flofamous.edu.ng',
+    username: 'cashier',
+    role: 'Cashier',
     status: 'Active',
-    password: 'admin123',
+    password: 'Flo1234',
     createdAt: '2026-09-21',
   },
   {
-    id: 'usr-teacher-pri4',
-    name: 'Mrs. Oluchi Okafor',
-    email: 'teacher.pri4@flofamous.edu.ng',
-    username: 'teacher.pri4',
+    id: 'usr-teacher',
+    name: 'Teacher',
+    email: 'teacher@flofamous.edu.ng',
+    username: 'teacher',
     role: 'Teacher',
     status: 'Active',
-    password: 'admin123',
+    password: 'Flo1234',
     createdAt: '2026-09-21',
   },
 ];
@@ -117,7 +118,7 @@ const INITIAL_SETTINGS: SchoolSettings = {
   schoolLogo: '/school_logo.png',
   address: 'Plot 18 FLO Famous Way, New Independence Layout, Enugu State, Nigeria',
   phone: '+234 (0) 803 456 7890 / +234 812 345 6789',
-  email: 'goldennwonu@gmail.com',
+  email: 'flofamous.edu.ng',
   website: 'https://flofamous.edu.ng',
   currencySymbol: '₦',
   currencyCode: 'NGN',
@@ -126,8 +127,8 @@ const INITIAL_SETTINGS: SchoolSettings = {
   receiptPrefix: 'FLO-RCP',
   studentIdPrefix: 'FLO',
   reportNote: 'This is an official computer-generated document from the FLO Famous School Management System.',
-  authorizedSignatoryName: 'Golden Nwonu',
-  authorizedSignatoryTitle: 'Host Administrator & Director',
+  authorizedSignatoryName: 'Admin',
+  authorizedSignatoryTitle: 'Administrator',
   bankName: 'First Bank of Nigeria',
   accountName: 'FLO Famous School Ltd',
   accountNumber: '2034981122',
@@ -179,13 +180,13 @@ const INITIAL_AUDIT_LOGS: AuditLog[] = [
     timestamp: new Date().toISOString(),
     date: '2026-09-21',
     time: '09:00:00 AM',
-    user: 'Golden Nwonu',
-    userEmail: 'goldennwonu@gmail.com',
-    userId: 'usr-golden-nwonu',
-    userRole: 'Super Admin',
+    user: 'Admin',
+    userEmail: 'flofamous.edu.ng',
+    userId: 'usr-admin',
+    userRole: 'Admin',
     action: 'System Initialized',
     affectedRecord: 'FLO Famous Portal Clean Slate',
-    description: 'System initialized to clean slate. Host Admin set to Golden Nwonu (goldennwonu@gmail.com). No students or payment records pre-loaded.',
+    description: 'System initialized. Primary Administrator set to Admin (flofamous.edu.ng). Security lock configured.',
     category: 'SYSTEM',
     severity: 'info',
     read: false,
@@ -212,10 +213,100 @@ export const saveToStorage = <T>(key: string, value: T): void => {
 };
 
 export const getInitialData = () => {
+  // Load users and ensure Title-based users (Admin, Accounts, Cashier, Teacher)
+  const storedUsers = loadFromStorage<AppUser[]>(STORAGE_KEYS.USERS, INITIAL_USERS);
+
+  // Normalize all users to purely Title-based names and roles
+  const normalizedUsers: AppUser[] = (storedUsers && storedUsers.length > 0 ? storedUsers : INITIAL_USERS).map((u) => {
+    let name = u.name;
+    let role = u.role as UserRole;
+    let username = u.username;
+    let email = u.email;
+
+    if (
+      name.toLowerCase().includes('chioma') ||
+      username === 'bursar' ||
+      role === 'Accountant' ||
+      role === 'Accounts' ||
+      name === 'Accounts'
+    ) {
+      name = 'Accounts';
+      role = 'Accounts';
+      username = 'accounts';
+      email = email.includes('flofamous') ? 'accounts@flofamous.edu.ng' : email;
+    } else if (
+      name.toLowerCase().includes('nwachukwu') ||
+      username === 'registrar' ||
+      role === 'Registrar' ||
+      role === 'Cashier' ||
+      name === 'Cashier'
+    ) {
+      name = 'Cashier';
+      role = 'Cashier';
+      username = 'cashier';
+      email = email.includes('flofamous') ? 'cashier@flofamous.edu.ng' : email;
+    } else if (
+      name.toLowerCase().includes('oluchi') ||
+      name.toLowerCase().includes('okafor') ||
+      role === 'Teacher' ||
+      name === 'Teacher'
+    ) {
+      name = 'Teacher';
+      role = 'Teacher';
+      username = 'teacher';
+      email = email.includes('flofamous') ? 'teacher@flofamous.edu.ng' : email;
+    } else {
+      name = 'Admin';
+      role = 'Admin';
+      username = 'admin';
+      email = 'flofamous.edu.ng';
+    }
+
+    return {
+      ...u,
+      name,
+      role,
+      username,
+      email,
+      password: u.password || 'Flo1234',
+    };
+  });
+
+  // Guarantee standard title profiles exist
+  const standardTitleProfiles: { id: string; name: string; email: string; username: string; role: UserRole; isMainAdmin?: boolean }[] = [
+    { id: 'usr-admin', name: 'Admin', email: 'flofamous.edu.ng', username: 'admin', role: 'Admin', isMainAdmin: true },
+    { id: 'usr-accounts', name: 'Accounts', email: 'accounts@flofamous.edu.ng', username: 'accounts', role: 'Accounts' },
+    { id: 'usr-cashier', name: 'Cashier', email: 'cashier@flofamous.edu.ng', username: 'cashier', role: 'Cashier' },
+    { id: 'usr-teacher', name: 'Teacher', email: 'teacher@flofamous.edu.ng', username: 'teacher', role: 'Teacher' },
+  ];
+
+  const finalUsers: AppUser[] = [...normalizedUsers];
+  for (const profile of standardTitleProfiles) {
+    if (!finalUsers.some((u) => u.name === profile.name)) {
+      finalUsers.push({
+        id: profile.id,
+        name: profile.name,
+        email: profile.email,
+        username: profile.username,
+        role: profile.role,
+        status: 'Active',
+        password: 'Flo1234',
+        createdAt: '2026-09-21',
+        isMainAdmin: profile.isMainAdmin,
+      });
+    }
+  }
+
+  try {
+    localStorage.setItem(STORAGE_KEYS.USERS, JSON.stringify(finalUsers));
+  } catch {
+    // Ignore storage quota
+  }
+
   return {
     classes: loadFromStorage<SchoolClass[]>(STORAGE_KEYS.CLASSES, INITIAL_CLASSES),
     sessions: loadFromStorage<AcademicSession[]>(STORAGE_KEYS.SESSIONS, INITIAL_SESSIONS),
-    users: loadFromStorage<AppUser[]>(STORAGE_KEYS.USERS, INITIAL_USERS),
+    users: finalUsers,
     settings: loadFromStorage<SchoolSettings>(STORAGE_KEYS.SETTINGS, INITIAL_SETTINGS),
     feeCategories: loadFromStorage<FeeCategory[]>(STORAGE_KEYS.FEE_CATEGORIES, INITIAL_FEE_CATEGORIES),
     classFeePricings: loadFromStorage<ClassFeePricing[]>(STORAGE_KEYS.CLASS_FEE_PRICINGS, INITIAL_CLASS_FEE_PRICINGS),
@@ -224,7 +315,8 @@ export const getInitialData = () => {
     feeAssignments: loadFromStorage<StudentFeeAssignment[]>(STORAGE_KEYS.FEE_ASSIGNMENTS, INITIAL_FEE_ASSIGNMENTS),
     payments: loadFromStorage<PaymentTransaction[]>(STORAGE_KEYS.PAYMENTS, INITIAL_PAYMENTS),
     auditLogs: loadFromStorage<AuditLog[]>(STORAGE_KEYS.AUDIT_LOGS, INITIAL_AUDIT_LOGS),
-    currentUser: loadFromStorage<AppUser>(STORAGE_KEYS.CURRENT_USER, INITIAL_USERS[0]),
+    // Crucial: on page refresh, currentUser is always null so the email/password lock screen is displayed!
+    currentUser: null as AppUser | null,
   };
 };
 
@@ -240,7 +332,7 @@ export const resetToFactoryDefaults = () => {
   localStorage.setItem(STORAGE_KEYS.FEE_ASSIGNMENTS, JSON.stringify(INITIAL_FEE_ASSIGNMENTS));
   localStorage.setItem(STORAGE_KEYS.PAYMENTS, JSON.stringify(INITIAL_PAYMENTS));
   localStorage.setItem(STORAGE_KEYS.AUDIT_LOGS, JSON.stringify(INITIAL_AUDIT_LOGS));
-  localStorage.setItem(STORAGE_KEYS.CURRENT_USER, JSON.stringify(INITIAL_USERS[0]));
+  localStorage.removeItem(STORAGE_KEYS.CURRENT_USER);
   window.location.reload();
 };
 

@@ -71,10 +71,10 @@ export const TopNav: React.FC<TopNavProps> = ({
   };
 
   const handleSwitchUserRole = (targetRole: UserRole) => {
-    const existing = users.find((u) => u.role === targetRole);
+    const existing = users.find((u) => u.role === targetRole || u.name === targetRole);
     if (existing) {
       setCurrentUser(existing);
-      notify(`Switched session to: ${existing.name} (${existing.role})`, 'info');
+      notify(`Switched session to: ${existing.name}`, 'info');
     }
     setIsRoleDropdownOpen(false);
   };
@@ -230,14 +230,14 @@ export const TopNav: React.FC<TopNavProps> = ({
             title="User Profile & Session"
           >
             <div className="w-6 h-6 rounded-lg bg-emerald-700 text-white flex items-center justify-center font-bold text-[10px]">
-              {currentUser?.name ? currentUser.name[0].toUpperCase() : 'U'}
+              {currentUser?.name ? currentUser.name.slice(0, 2).toUpperCase() : 'AD'}
             </div>
             <div className="hidden md:flex flex-col text-left">
               <span className="text-xs font-bold text-slate-800 leading-tight">
-                {currentUser?.name || 'Authorized Staff'}
+                {currentUser?.name || 'Admin'}
               </span>
               <span className="text-[10px] text-emerald-700 font-medium leading-tight">
-                {currentUser?.role || 'Staff'}
+                {currentUser?.role || 'Admin'}
               </span>
             </div>
             <ChevronDown className="w-3.5 h-3.5 text-slate-400" />
@@ -251,14 +251,14 @@ export const TopNav: React.FC<TopNavProps> = ({
               {/* Profile Summary */}
               <div className="px-4 py-2.5 border-b border-slate-100">
                 <div className="font-bold text-slate-900 text-sm">
-                  {currentUser?.name || 'Staff Member'}
+                  {currentUser?.name || 'Admin'}
                 </div>
                 <div className="text-[11px] text-slate-500 truncate">
-                  {currentUser?.email}
+                  {currentUser?.email || 'flofamous.edu.ng'}
                 </div>
                 <div className="mt-1.5 flex items-center gap-1.5">
                   <span className="px-2 py-0.5 rounded-md text-[10px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-200">
-                    {currentUser?.role}
+                    {currentUser?.role || 'Admin'}
                   </span>
                   <span className="text-[10px] text-slate-400">
                     Status: <strong className="text-emerald-600">Active</strong>
@@ -268,33 +268,33 @@ export const TopNav: React.FC<TopNavProps> = ({
 
               {/* Role Switcher Options */}
               <div className="px-3 pt-2 pb-1 text-[10px] font-bold text-slate-400 uppercase tracking-wider flex items-center justify-between">
-                <span>Switch Staff Role</span>
+                <span>Switch Staff Title</span>
                 <RefreshCw className="w-3 h-3 text-slate-400" />
               </div>
               <button
-                onClick={() => handleSwitchUserRole('Super Admin')}
+                onClick={() => handleSwitchUserRole('Admin')}
                 className="w-full px-4 py-1.5 text-left hover:bg-emerald-50 text-slate-800 font-medium flex items-center justify-between text-xs"
               >
-                <span>Super Admin (Director)</span>
-                {currentUser?.role === 'Super Admin' && (
+                <span>Admin</span>
+                {(currentUser?.role === 'Admin' || currentUser?.name === 'Admin') && (
                   <span className="w-1.5 h-1.5 rounded-full bg-emerald-600"></span>
                 )}
               </button>
               <button
-                onClick={() => handleSwitchUserRole('Accountant')}
+                onClick={() => handleSwitchUserRole('Accounts')}
                 className="w-full px-4 py-1.5 text-left hover:bg-emerald-50 text-slate-800 font-medium flex items-center justify-between text-xs"
               >
-                <span>Accountant (Bursar)</span>
-                {currentUser?.role === 'Accountant' && (
+                <span>Accounts</span>
+                {(currentUser?.role === 'Accounts' || currentUser?.name === 'Accounts') && (
                   <span className="w-1.5 h-1.5 rounded-full bg-emerald-600"></span>
                 )}
               </button>
               <button
-                onClick={() => handleSwitchUserRole('Registrar')}
+                onClick={() => handleSwitchUserRole('Cashier')}
                 className="w-full px-4 py-1.5 text-left hover:bg-emerald-50 text-slate-800 font-medium flex items-center justify-between text-xs"
               >
-                <span>Registrar</span>
-                {currentUser?.role === 'Registrar' && (
+                <span>Cashier</span>
+                {(currentUser?.role === 'Cashier' || currentUser?.name === 'Cashier') && (
                   <span className="w-1.5 h-1.5 rounded-full bg-emerald-600"></span>
                 )}
               </button>
@@ -302,8 +302,8 @@ export const TopNav: React.FC<TopNavProps> = ({
                 onClick={() => handleSwitchUserRole('Teacher')}
                 className="w-full px-4 py-1.5 text-left hover:bg-emerald-50 text-slate-800 font-medium flex items-center justify-between text-xs"
               >
-                <span>Teacher / Class Head</span>
-                {currentUser?.role === 'Teacher' && (
+                <span>Teacher</span>
+                {(currentUser?.role === 'Teacher' || currentUser?.name === 'Teacher') && (
                   <span className="w-1.5 h-1.5 rounded-full bg-emerald-600"></span>
                 )}
               </button>

@@ -21,8 +21,8 @@ export const LoginScreen: React.FC = () => {
   const [mode, setMode] = useState<'signin' | 'signup'>('signin');
 
   // Sign In form fields
-  const [signInEmail, setSignInEmail] = useState('goldennwonu@gmail.com');
-  const [signInPassword, setSignInPassword] = useState('admin123');
+  const [signInEmail, setSignInEmail] = useState('flofamous.edu.ng');
+  const [signInPassword, setSignInPassword] = useState('Flo1234');
   const [showSignInPassword, setShowSignInPassword] = useState(false);
 
   // Sign Up form fields
@@ -79,10 +79,10 @@ export const LoginScreen: React.FC = () => {
     }
   };
 
-  const handleQuickLogin = (email: string) => {
+  const handleQuickLogin = (email: string, password = 'Flo1234') => {
     setSignInEmail(email);
-    setSignInPassword('admin123');
-    login(email, 'admin123');
+    setSignInPassword(password);
+    login(email, password);
   };
 
   return (
@@ -126,7 +126,7 @@ export const LoginScreen: React.FC = () => {
               }`}
             >
               <Lock className="w-3.5 h-3.5" />
-              <span>Sign In</span>
+              <span>Security Lock & Sign In</span>
             </button>
             <button
               id="tab-btn-signup"
@@ -139,7 +139,7 @@ export const LoginScreen: React.FC = () => {
               }`}
             >
               <Sparkles className="w-3.5 h-3.5" />
-              <span>Sign Up / Register</span>
+              <span>Register Staff</span>
             </button>
           </div>
 
@@ -147,28 +147,47 @@ export const LoginScreen: React.FC = () => {
           {mode === 'signin' && (
             <div className="space-y-4">
               <div className="text-center pb-1">
+                <div className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-amber-50 border border-amber-200 text-amber-900 text-[10px] font-bold mb-1.5">
+                  <Lock className="w-3 h-3 text-amber-600" />
+                  <span>Administrative Security Lock Active</span>
+                </div>
                 <h2 className="text-sm sm:text-base font-bold text-slate-900 font-display">
-                  Authorized Staff Sign In
+                  Unlock School Dashboard
                 </h2>
                 <p className="text-xs text-slate-500 mt-0.5">
-                  Enter your email and password to access the live dashboard
+                  Enter your administrative credentials to unlock and access the system
                 </p>
+              </div>
+
+              {/* Master Credentials Notice */}
+              <div className="p-3 rounded-2xl bg-emerald-50/80 border border-emerald-200/80 text-emerald-900 text-xs space-y-1">
+                <div className="font-bold flex items-center gap-1.5 text-emerald-950">
+                  <ShieldCheck className="w-4 h-4 text-emerald-600" />
+                  <span>Admin Credentials on Page Refresh:</span>
+                </div>
+                <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-[11px] text-emerald-800">
+                  <span>Email: <strong className="font-mono text-emerald-950">flofamous.edu.ng</strong></span>
+                  <span>Password: <strong className="font-mono text-emerald-950">Flo1234</strong></span>
+                </div>
               </div>
 
               <form onSubmit={handleSignInSubmit} className="space-y-3.5">
                 <div>
                   <label className="block font-semibold text-slate-700 mb-1">
-                    Staff Email
+                    Staff Email or Username
                   </label>
                   <div className="relative">
                     <Mail className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
                     <input
                       id="input-signin-email"
-                      type="email"
+                      type="text"
+                      autoCapitalize="none"
+                      autoCorrect="off"
+                      spellCheck="false"
                       required
                       value={signInEmail}
                       onChange={(e) => setSignInEmail(e.target.value)}
-                      placeholder="e.g. goldennwonu@gmail.com"
+                      placeholder="flofamous.edu.ng"
                       className="w-full pl-9 pr-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs sm:text-sm font-medium text-slate-900 focus:outline-hidden focus:bg-white focus:ring-2 focus:ring-emerald-600"
                     />
                   </div>
@@ -179,8 +198,8 @@ export const LoginScreen: React.FC = () => {
                     <label className="font-semibold text-slate-700">
                       Password
                     </label>
-                    <span className="text-[10px] text-emerald-700 font-medium">
-                      Default: admin123
+                    <span className="text-[10px] text-emerald-700 font-semibold font-mono">
+                      Pass: Flo1234
                     </span>
                   </div>
                   <div className="relative">
@@ -191,7 +210,7 @@ export const LoginScreen: React.FC = () => {
                       required
                       value={signInPassword}
                       onChange={(e) => setSignInPassword(e.target.value)}
-                      placeholder="••••••••"
+                      placeholder="Flo1234"
                       className="w-full pl-9 pr-10 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs sm:text-sm font-mono text-slate-900 focus:outline-hidden focus:bg-white focus:ring-2 focus:ring-emerald-600"
                     />
                     <button
@@ -210,63 +229,55 @@ export const LoginScreen: React.FC = () => {
                   type="submit"
                   className="w-full py-3 px-4 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white font-bold text-xs sm:text-sm shadow-md shadow-emerald-700/30 transition-all flex items-center justify-center gap-2 cursor-pointer"
                 >
-                  <span>Sign In & Open Dashboard</span>
+                  <span>Unlock Dashboard & Enter System</span>
                   <ArrowRight className="w-4 h-4" />
                 </button>
               </form>
 
-              {/* Link to Sign Up */}
-              <div className="text-center pt-2">
-                <button
-                  type="button"
-                  onClick={() => setMode('signup')}
-                  className="text-xs text-emerald-700 hover:text-emerald-800 font-semibold inline-flex items-center gap-1"
-                >
-                  <span>Received an email invitation or need an account?</span>
-                  <strong className="underline">Sign Up here</strong>
-                </button>
-              </div>
-
               {/* Quick 1-Click Role Logins */}
               <div className="pt-3 border-t border-slate-100">
                 <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider text-center mb-2">
-                  Quick 1-Click Role Login for Testing:
+                  Quick 1-Click Unlock Profiles:
                 </div>
                 <div className="grid grid-cols-2 gap-2">
                   <button
                     type="button"
-                    onClick={() => handleQuickLogin('goldennwonu@gmail.com')}
-                    className="p-2 rounded-xl border border-slate-200 hover:border-emerald-600 bg-slate-50 hover:bg-emerald-50/50 text-left transition-all"
+                    onClick={() => handleQuickLogin('flofamous.edu.ng', 'Flo1234')}
+                    className="p-2.5 rounded-xl border-2 border-emerald-600 bg-emerald-50/60 hover:bg-emerald-100/70 text-left transition-all cursor-pointer shadow-xs"
                   >
-                    <div className="font-bold text-slate-900 text-[11px] truncate">Golden Nwonu</div>
-                    <div className="text-[10px] text-purple-700 font-semibold">Super Admin (Host)</div>
+                    <div className="font-black text-emerald-950 text-xs truncate">Admin</div>
+                    <div className="text-[10px] text-emerald-700 font-bold">Admin (Primary)</div>
+                    <div className="text-[9px] font-mono text-slate-500 truncate mt-0.5">flofamous.edu.ng</div>
                   </button>
 
                   <button
                     type="button"
-                    onClick={() => handleQuickLogin('bursar@flofamous.edu.ng')}
-                    className="p-2 rounded-xl border border-slate-200 hover:border-emerald-600 bg-slate-50 hover:bg-emerald-50/50 text-left transition-all"
+                    onClick={() => handleQuickLogin('accounts@flofamous.edu.ng', 'Flo1234')}
+                    className="p-2.5 rounded-xl border border-slate-200 hover:border-emerald-600 bg-slate-50 hover:bg-emerald-50/50 text-left transition-all cursor-pointer"
                   >
-                    <div className="font-bold text-slate-900 text-[11px] truncate">Mrs. Chioma Eze</div>
-                    <div className="text-[10px] text-emerald-700 font-semibold">Accountant (Bursar)</div>
+                    <div className="font-bold text-slate-900 text-xs truncate">Accounts</div>
+                    <div className="text-[10px] text-emerald-700 font-semibold">Fee & Accounts</div>
+                    <div className="text-[9px] font-mono text-slate-500 truncate mt-0.5">accounts@flofamous...</div>
                   </button>
 
                   <button
                     type="button"
-                    onClick={() => handleQuickLogin('registrar@flofamous.edu.ng')}
-                    className="p-2 rounded-xl border border-slate-200 hover:border-emerald-600 bg-slate-50 hover:bg-emerald-50/50 text-left transition-all"
+                    onClick={() => handleQuickLogin('cashier@flofamous.edu.ng', 'Flo1234')}
+                    className="p-2.5 rounded-xl border border-slate-200 hover:border-emerald-600 bg-slate-50 hover:bg-emerald-50/50 text-left transition-all cursor-pointer"
                   >
-                    <div className="font-bold text-slate-900 text-[11px] truncate">Mr. B. Nwachukwu</div>
-                    <div className="text-[10px] text-blue-700 font-semibold">Registrar</div>
+                    <div className="font-bold text-slate-900 text-xs truncate">Cashier</div>
+                    <div className="text-[10px] text-blue-700 font-semibold">Receipts & Cashier</div>
+                    <div className="text-[9px] font-mono text-slate-500 truncate mt-0.5">cashier@flofamous...</div>
                   </button>
 
                   <button
                     type="button"
-                    onClick={() => handleQuickLogin('teacher.pri4@flofamous.edu.ng')}
-                    className="p-2 rounded-xl border border-slate-200 hover:border-emerald-600 bg-slate-50 hover:bg-emerald-50/50 text-left transition-all"
+                    onClick={() => handleQuickLogin('teacher@flofamous.edu.ng', 'Flo1234')}
+                    className="p-2.5 rounded-xl border border-slate-200 hover:border-emerald-600 bg-slate-50 hover:bg-emerald-50/50 text-left transition-all cursor-pointer"
                   >
-                    <div className="font-bold text-slate-900 text-[11px] truncate">Mrs. Oluchi Okafor</div>
-                    <div className="text-[10px] text-amber-700 font-semibold">Teacher (Primary 4)</div>
+                    <div className="font-bold text-slate-900 text-xs truncate">Teacher</div>
+                    <div className="text-[10px] text-amber-700 font-semibold">Class Oversight</div>
+                    <div className="text-[9px] font-mono text-slate-500 truncate mt-0.5">teacher@flofamous...</div>
                   </button>
                 </div>
               </div>
@@ -281,7 +292,7 @@ export const LoginScreen: React.FC = () => {
                   Staff Account Registration
                 </h2>
                 <p className="text-xs text-slate-500 mt-0.5">
-                  Enter your name, email, and choose a password to access your dashboard
+                  Enter your staff title, email, and password to access your dashboard
                 </p>
               </div>
 
@@ -293,10 +304,10 @@ export const LoginScreen: React.FC = () => {
               </div>
 
               <form onSubmit={handleSignUpSubmit} className="space-y-3">
-                {/* Full Name */}
+                {/* Staff Title */}
                 <div>
                   <label className="block font-semibold text-slate-700 mb-1">
-                    Your Full Name *
+                    Staff Title *
                   </label>
                   <div className="relative">
                     <User className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
@@ -306,7 +317,7 @@ export const LoginScreen: React.FC = () => {
                       required
                       value={signUpName}
                       onChange={(e) => setSignUpName(e.target.value)}
-                      placeholder="e.g. Golden Nwonu or Dr. Chinedu Eze"
+                      placeholder="e.g. Admin, Accounts, Cashier or Teacher"
                       className="w-full pl-9 pr-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs sm:text-sm font-medium text-slate-900 focus:outline-hidden focus:bg-white focus:ring-2 focus:ring-emerald-600"
                     />
                   </div>
@@ -325,7 +336,7 @@ export const LoginScreen: React.FC = () => {
                       required
                       value={signUpEmail}
                       onChange={(e) => setSignUpEmail(e.target.value)}
-                      placeholder="e.g. name@flofamous.edu.ng"
+                      placeholder="e.g. accounts@flofamous.edu.ng"
                       className="w-full pl-9 pr-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs sm:text-sm font-medium text-slate-900 focus:outline-hidden focus:bg-white focus:ring-2 focus:ring-emerald-600"
                     />
                   </div>
@@ -334,7 +345,7 @@ export const LoginScreen: React.FC = () => {
                 {/* Staff Role */}
                 <div>
                   <label className="block font-semibold text-slate-700 mb-1">
-                    Assigned Role *
+                    Assigned Role / Title *
                   </label>
                   <div className="relative">
                     <ShieldCheck className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
@@ -344,11 +355,10 @@ export const LoginScreen: React.FC = () => {
                       onChange={(e) => setSignUpRole(e.target.value as UserRole)}
                       className="w-full pl-9 pr-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs sm:text-sm font-semibold text-slate-900 focus:outline-hidden focus:bg-white focus:ring-2 focus:ring-emerald-600"
                     >
-                      <option value="Super Admin">Super Admin (Director)</option>
-                      <option value="Administrator">Administrator</option>
-                      <option value="Accountant">Accountant (Bursar)</option>
-                      <option value="Registrar">Registrar</option>
-                      <option value="Teacher">Teacher / Class Head</option>
+                      <option value="Admin">Admin</option>
+                      <option value="Accounts">Accounts</option>
+                      <option value="Cashier">Cashier</option>
+                      <option value="Teacher">Teacher</option>
                     </select>
                   </div>
                 </div>

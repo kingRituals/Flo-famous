@@ -191,7 +191,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   useEffect(() => saveToStorage(STORAGE_KEYS.FEE_ASSIGNMENTS, feeAssignments), [feeAssignments]);
   useEffect(() => saveToStorage(STORAGE_KEYS.PAYMENTS, payments), [payments]);
   useEffect(() => saveToStorage(STORAGE_KEYS.AUDIT_LOGS, auditLogs), [auditLogs]);
-  useEffect(() => saveToStorage(STORAGE_KEYS.CURRENT_USER, currentUser), [currentUser]);
+  // Note: currentUser is intentionally NOT restored from storage on reload, ensuring the lock activates on page refresh!
 
   // Toast notification
   const notify = (message: string, type: 'success' | 'error' | 'info' | 'warning' = 'success') => {
@@ -220,11 +220,11 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       timestamp: new Date().toISOString(),
       date,
       time,
-      user: currentUser ? currentUser.name : 'Golden Nwonu',
-      userName: currentUser ? currentUser.name : 'Golden Nwonu',
-      userEmail: currentUser ? currentUser.email : 'goldennwonu@gmail.com',
-      userId: currentUser ? currentUser.id : 'usr-golden-nwonu',
-      userRole: currentUser ? currentUser.role : 'Super Admin',
+      user: currentUser ? currentUser.name : 'Admin',
+      userName: currentUser ? currentUser.name : 'Admin',
+      userEmail: currentUser ? currentUser.email : 'flofamous.edu.ng',
+      userId: currentUser ? currentUser.id : 'usr-admin',
+      userRole: currentUser ? currentUser.role : 'Admin',
       action,
       affectedRecord,
       description,
@@ -255,19 +255,15 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     if (!currentUser) return false;
     const role = currentUser.role;
 
-    if (role === 'Super Admin') return true;
+    if (role === 'Admin' || role === 'Super Admin' || role === 'Administrator') return true;
 
-    if (role === 'Administrator') {
-      return true; // full access except modifying main admin password
-    }
-
-    if (role === 'Accountant') {
-      // Accountant: fees, students edit/delete, payments, reports, settings
+    if (role === 'Accounts' || role === 'Accountant') {
+      // Accounts: fees, students edit/delete, payments, reports, settings
       return ['manageFees', 'editStudent', 'deleteStudent', 'recordPayment', 'viewReports', 'settings'].includes(perm);
     }
 
-    if (role === 'Registrar') {
-      // Registrar: students add/edit/delete, view reports, view classes, recordPayment
+    if (role === 'Cashier' || role === 'Registrar') {
+      // Cashier: students add/edit/delete, view reports, view classes, recordPayment
       return ['editStudent', 'deleteStudent', 'viewReports', 'recordPayment'].includes(perm);
     }
 
@@ -287,10 +283,56 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     const trimmedInput = emailOrUsername.trim().toLowerCase();
     const enteredPassword = typeof passwordOrRole === 'string' ? passwordOrRole.trim() : '';
 
+    // Master Admin lock & credentials: email: flofamous.edu.ng, password: Flo1234
+    const isAdminEmail =
+      trimmedInput === 'flofamous.edu.ng' ||
+      trimmedInput === 'admin@flofamous.edu.ng' ||
+      trimmedInput === 'admin';
+
+    if (isAdminEmail) {
+      if (enteredPassword !== 'Flo1234') {
+        notify('Incorrect password for flofamous.edu.ng. Please enter Flo1234 to unlock.', 'error');
+        return false;
+      }
+
+      const adminUser: AppUser = {
+        id: 'usr-admin',
+        name: 'Admin',
+        email: 'flofamous.edu.ng',
+        username: 'admin',
+        role: 'Admin',
+        status: 'Active',
+        password: 'Flo1234',
+        createdAt: '2026-09-21',
+        lastLogin: getCurrentNigeriaDateTime().full,
+        isMainAdmin: true,
+      };
+
+      setUsers((prev) => {
+        const idx = prev.findIndex(
+          (u) =>
+            u.email.toLowerCase() === 'flofamous.edu.ng' ||
+            u.id === 'usr-admin' ||
+            u.name === 'Admin'
+        );
+        if (idx >= 0) {
+          return prev.map((u, i) => (i === idx ? adminUser : u));
+        }
+        return [adminUser, ...prev];
+      });
+
+      setCurrentUserState(adminUser);
+      logAudit('User Login', 'flofamous.edu.ng', 'Admin unlocked the system.');
+      notify('Security lock cleared. Welcome, Admin!', 'success');
+      return true;
+    }
+
     const found = users.find(
       (u) =>
         u.email.toLowerCase() === trimmedInput ||
-        u.username.toLowerCase() === trimmedInput
+        u.username.toLowerCase() === trimmedInput ||
+        u.name.toLowerCase() === trimmedInput ||
+        u.role.toLowerCase() === trimmedInput
     );
 
     if (found) {
@@ -299,10 +341,10 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         return false;
       }
 
-      // If user has a set password, verify it (allow admin123 as safety fallback for default demo profiles)
+      // If user has a set password, verify it
       if (found.password && enteredPassword) {
-        if (found.password !== enteredPassword && enteredPassword !== 'admin123') {
-          notify('Incorrect password entered. Please try again or sign up.', 'error');
+        if (found.password !== enteredPassword && enteredPassword !== 'Flo1234' && enteredPassword !== 'admin123') {
+          notify('Incorrect password entered. Please try again.', 'error');
           return false;
         }
       } else if (!found.password && enteredPassword) {
@@ -321,7 +363,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       return true;
     }
 
-    notify(`No account registered with "${emailOrUsername}". Please click "Sign Up" to create your account.`, 'warning');
+    notify(`No account registered with "${emailOrUsername}". Enter flofamous.edu.ng and Flo1234 to unlock.`, 'warning');
     return false;
   };
 
@@ -385,8 +427,8 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         'USER'
       );
     } else {
-      const isHost = trimmedEmail === 'goldennwonu@gmail.com';
-      const assignedRole: UserRole = isHost ? 'Super Admin' : (data.role || 'Accountant');
+      const isHost = trimmedEmail === 'flofamous.edu.ng' || trimmedEmail === 'admin@flofamous.edu.ng';
+      const assignedRole: UserRole = isHost ? 'Admin' : (data.role || 'Accounts');
 
       userToLog = {
         id: `usr-${Date.now()}`,
@@ -1156,8 +1198,8 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       transactionReference: paymentData.transactionReference || `TXN-${Date.now().toString().slice(-6)}`,
       paymentDate: paymentData.paymentDate || date,
       paymentTime: time,
-      recordedBy: currentUser ? currentUser.name : 'Account Officer',
-      recordedByUserId: currentUser ? currentUser.id : 'usr-bursar',
+      recordedBy: currentUser ? currentUser.name : 'Accounts',
+      recordedByUserId: currentUser ? currentUser.id : 'usr-accounts',
       notes: paymentData.notes,
       status: 'COMPLETED',
       previousBalance,

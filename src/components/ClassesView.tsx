@@ -325,13 +325,13 @@ export const ClassesView: React.FC<ClassesViewProps> = ({ onSelectClassInTable }
 
               <div>
                 <label className="block font-semibold text-slate-700 mb-1">
-                  Assigned Class Teacher
+                  Assigned Class Teacher / Title
                 </label>
                 <input
                   type="text"
                   value={newClassTeacher}
                   onChange={(e) => setNewClassTeacher(e.target.value)}
-                  placeholder="e.g. Mr. S. Okoli"
+                  placeholder="e.g. Teacher, Class Head"
                   className="w-full px-3 py-2 border border-slate-200 rounded-xl"
                 />
               </div>

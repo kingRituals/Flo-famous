@@ -47,8 +47,8 @@ export const UsersView: React.FC = () => {
       return;
     }
     const targetUser = users.find((u) => u.id === userId);
-    if (targetUser?.isMainAdmin || targetUser?.email === 'goldennwonu@gmail.com') {
-      notify('The host administrator account cannot be deactivated.', 'error');
+    if (targetUser?.isMainAdmin || targetUser?.email === 'flofamous.edu.ng') {
+      notify('The primary administrator account cannot be deactivated.', 'error');
       return;
     }
     const newStatus: UserStatus = currentStatus === 'Active' ? 'Inactive' : 'Active';
@@ -70,7 +70,7 @@ export const UsersView: React.FC = () => {
                 Authorized Staff & Access Control
               </h2>
               <p className="text-xs text-slate-500">
-                Manage roles (Director, Bursar, Registrar, Teachers) and invite staff members via email.
+                Manage roles (Admin, Accounts, Cashier, Teacher) and configure authorized staff access.
               </p>
             </div>
           </div>
@@ -82,7 +82,7 @@ export const UsersView: React.FC = () => {
             className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white text-xs sm:text-sm font-bold shadow-xs transition-colors"
           >
             <UserPlus className="w-4 h-4" />
-            <span>Invite User via Email</span>
+            <span>Add Staff Title</span>
           </button>
         )}
       </div>
@@ -92,16 +92,16 @@ export const UsersView: React.FC = () => {
         <div className="p-3.5 bg-white rounded-xl border border-slate-200">
           <div className="font-bold text-slate-900 flex items-center gap-1.5">
             <span className="w-2 h-2 rounded-full bg-purple-600"></span>
-            Super Admin (Director)
+            Admin (Primary)
           </div>
           <p className="text-slate-500 text-[11px] mt-1">
-            Full system control, fee configuration, session creation, user management, and audit logs.
+            Master control, session configuration, fee categories, user titles, and complete ledger records.
           </p>
         </div>
         <div className="p-3.5 bg-white rounded-xl border border-slate-200">
           <div className="font-bold text-slate-900 flex items-center gap-1.5">
             <span className="w-2 h-2 rounded-full bg-emerald-600"></span>
-            Accountant (Bursar)
+            Accounts
           </div>
           <p className="text-slate-500 text-[11px] mt-1">
             Fee table editing, recording payments, receipt generation, and financial reports.
@@ -110,10 +110,10 @@ export const UsersView: React.FC = () => {
         <div className="p-3.5 bg-white rounded-xl border border-slate-200">
           <div className="font-bold text-slate-900 flex items-center gap-1.5">
             <span className="w-2 h-2 rounded-full bg-blue-600"></span>
-            Registrar
+            Cashier
           </div>
           <p className="text-slate-500 text-[11px] mt-1">
-            Register students, manage classes, parent info, and view fee clearance statuses.
+            Student fee collection, receipt issuance, instant printing, and payment history.
           </p>
         </div>
         <div className="p-3.5 bg-white rounded-xl border border-slate-200">
@@ -139,7 +139,7 @@ export const UsersView: React.FC = () => {
           <table className="w-full text-left text-xs">
             <thead className="bg-slate-50 text-slate-600 font-semibold border-b border-slate-200 uppercase">
               <tr>
-                <th className="p-3">Staff Name</th>
+                <th className="p-3">Staff Title</th>
                 <th className="p-3">Email Address</th>
                 <th className="p-3">Role</th>
                 <th className="p-3">Status</th>
@@ -152,12 +152,12 @@ export const UsersView: React.FC = () => {
                 <tr key={u.id} className="hover:bg-slate-50/80 transition-colors">
                   <td className="p-3 font-semibold text-slate-900 whitespace-nowrap flex items-center gap-2">
                     <div className="w-7 h-7 rounded-full bg-emerald-100 text-emerald-800 font-bold flex items-center justify-center text-xs shrink-0">
-                      {u.name.charAt(0)}
+                      {u.name.slice(0, 2).toUpperCase()}
                     </div>
                     <span>{u.name}</span>
-                    {(u.isMainAdmin || u.email === 'goldennwonu@gmail.com') && (
+                    {u.isMainAdmin && (
                       <span className="px-1.5 py-0.5 rounded text-[9px] font-extrabold bg-amber-100 text-amber-900 border border-amber-300">
-                        Host Admin
+                        Primary Admin
                       </span>
                     )}
                   </td>
@@ -165,11 +165,11 @@ export const UsersView: React.FC = () => {
                   <td className="p-3 whitespace-nowrap">
                     <span
                       className={`inline-block px-2.5 py-0.5 rounded-full text-[10px] font-bold ${
-                        u.role === 'Super Admin'
+                        u.role === 'Admin' || u.role === 'Super Admin'
                           ? 'bg-purple-100 text-purple-800'
-                          : u.role === 'Accountant'
+                          : u.role === 'Accounts' || u.role === 'Accountant'
                           ? 'bg-emerald-100 text-emerald-800'
-                          : u.role === 'Registrar'
+                          : u.role === 'Cashier' || u.role === 'Registrar'
                           ? 'bg-blue-100 text-blue-800'
                           : 'bg-amber-100 text-amber-800'
                       }`}
@@ -190,9 +190,9 @@ export const UsersView: React.FC = () => {
                   </td>
                   <td className="p-3 text-slate-500 whitespace-nowrap">{u.createdAt}</td>
                   <td className="p-3 text-center whitespace-nowrap">
-                    {u.isMainAdmin || u.email === 'goldennwonu@gmail.com' ? (
+                    {u.isMainAdmin ? (
                       <span className="text-[10px] text-slate-400 font-semibold italic">
-                        Host Admin (Primary)
+                        Primary Admin
                       </span>
                     ) : (
                       hasPermission('manageUsers') && (
@@ -221,23 +221,23 @@ export const UsersView: React.FC = () => {
         <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
           <div className="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl border border-slate-200 animate-in fade-in zoom-in duration-150 text-xs">
             <h3 className="text-base font-bold text-slate-900 mb-1 font-display">
-              Invite Staff Member via Email
+              Add Staff Title / Profile
             </h3>
             <p className="text-xs text-slate-500 mb-4">
-              Add new authorized staff to FLO Famous School Management System.
+              Add authorized staff title to FLO Famous School Management System.
             </p>
 
             <form onSubmit={handleAddUser} className="space-y-3">
               <div>
                 <label className="block font-semibold text-slate-700 mb-1">
-                  Full Name *
+                  Staff Title *
                 </label>
                 <input
                   type="text"
                   required
                   value={name}
                   onChange={(e) => setName(e.target.value)}
-                  placeholder="e.g. Mrs. Blessing Nnaji"
+                  placeholder="e.g. Admin, Accounts, Cashier or Teacher"
                   className="w-full px-3 py-2 border border-slate-200 rounded-xl"
                 />
               </div>
@@ -251,7 +251,7 @@ export const UsersView: React.FC = () => {
                   required
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  placeholder="e.g. blessing@flofamous.edu.ng"
+                  placeholder="e.g. accounts@flofamous.edu.ng"
                   className="w-full px-3 py-2 border border-slate-200 rounded-xl"
                 />
               </div>
@@ -265,11 +265,10 @@ export const UsersView: React.FC = () => {
                   onChange={(e) => setRole(e.target.value as UserRole)}
                   className="w-full px-3 py-2 border border-slate-200 rounded-xl bg-slate-50 font-semibold"
                 >
-                  <option value="Super Admin">Super Admin (Director)</option>
-                  <option value="Administrator">Administrator</option>
-                  <option value="Accountant">Accountant (Bursar)</option>
-                  <option value="Registrar">Registrar</option>
-                  <option value="Teacher">Teacher / Class Head</option>
+                  <option value="Admin">Admin</option>
+                  <option value="Accounts">Accounts</option>
+                  <option value="Cashier">Cashier</option>
+                  <option value="Teacher">Teacher</option>
                 </select>
               </div>
 

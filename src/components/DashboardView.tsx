@@ -99,10 +99,10 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ onNavigateToTab })
             </span>
           </div>
           <h2 className="text-xl sm:text-2xl lg:text-3xl font-black tracking-tight text-white font-display">
-            Welcome, {currentUser?.name || 'Staff Member'}! 👋
+            Welcome, {currentUser?.name || 'Admin'}! 👋
           </h2>
           <p className="text-xs sm:text-sm text-emerald-200/90 mt-1 max-w-2xl">
-            Logged in as <strong className="text-white font-semibold">{currentUser?.name}</strong> ({currentUser?.role}). Active session: <strong className="text-amber-300">{activeSession}</strong> ({activeTerm}). All financial computations, student fees, and ledger records reflect live entries in real time.
+            Logged in as <strong className="text-white font-semibold">{currentUser?.name || 'Admin'}</strong> ({currentUser?.role || 'Admin'}). Active session: <strong className="text-amber-300">{activeSession}</strong> ({activeTerm}). All financial computations, student fees, and ledger records reflect live entries in real time.
           </p>
         </div>
 
@@ -131,30 +131,32 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ onNavigateToTab })
         <div className="flex items-center gap-3.5">
           <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-emerald-600 to-emerald-800 text-white flex items-center justify-center font-bold text-base shadow-sm ring-2 ring-emerald-500/20 shrink-0">
             {currentUser?.name
-              ? currentUser.name
-                  .split(' ')
-                  .map((n) => n[0])
-                  .slice(0, 2)
-                  .join('')
-                  .toUpperCase()
-              : 'ST'}
+              ? currentUser.name === 'Admin'
+                ? 'AD'
+                : currentUser.name
+                    .split(' ')
+                    .map((n) => n[0])
+                    .slice(0, 2)
+                    .join('')
+                    .toUpperCase()
+              : 'AD'}
           </div>
           <div>
             <div className="flex flex-wrap items-center gap-2">
               <span className="font-bold text-slate-900 text-sm sm:text-base">
-                {currentUser?.name || 'Staff Member'}
+                {currentUser?.name || 'Admin'}
               </span>
               <span className="px-2 py-0.5 rounded-md text-[11px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-200">
-                {currentUser?.role || 'Staff'}
+                {currentUser?.role || 'Admin'}
               </span>
               {currentUser?.isMainAdmin && (
                 <span className="px-2 py-0.5 rounded-md text-[10px] font-bold bg-purple-100 text-purple-800 border border-purple-200">
-                  Host Director
+                  Primary Admin
                 </span>
               )}
             </div>
             <div className="text-xs text-slate-500 flex flex-wrap items-center gap-2 mt-0.5">
-              <span>{currentUser?.email}</span>
+              <span>{currentUser?.email || 'flofamous.edu.ng'}</span>
               <span>•</span>
               <span className="text-emerald-700 font-medium inline-flex items-center gap-1">
                 <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>

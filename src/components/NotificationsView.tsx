@@ -232,22 +232,22 @@ export const NotificationsView: React.FC = () => {
       {/* Host Admin Status Notice */}
       <div className="p-3.5 bg-emerald-950 text-emerald-100 rounded-xl flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs border border-emerald-800 shadow-xs">
         <div className="flex items-center gap-2.5">
-          <div className="w-8 h-8 rounded-lg bg-amber-400 text-emerald-950 font-bold flex items-center justify-center shrink-0">
-            GN
+          <div className="w-8 h-8 rounded-lg bg-emerald-600 text-white font-bold flex items-center justify-center shrink-0">
+            AD
           </div>
           <div>
             <div className="font-semibold text-white">
-              Host Super Administrator: Golden Nwonu ({' '}
-              <span className="text-amber-300 font-mono">goldennwonu@gmail.com</span> )
+              Primary System Administrator: Admin ({' '}
+              <span className="text-amber-300 font-mono">flofamous.edu.ng</span> )
             </div>
             <div className="text-emerald-300 text-[11px]">
-              Full authorization enabled: Add users, create academic years, and add custom spreadsheet columns.
+              Full authorization enabled: Add users, create academic sessions, and manage fee records.
             </div>
           </div>
         </div>
         <div className="flex items-center gap-2 self-start sm:self-center">
           <span className="px-2.5 py-1 rounded-full bg-emerald-800/80 text-emerald-200 text-[11px] font-medium border border-emerald-700">
-            Clean Slate Activated
+            Live System Active
           </span>
         </div>
       </div>
@@ -296,9 +296,9 @@ export const NotificationsView: React.FC = () => {
               className="w-full bg-transparent font-semibold text-slate-800 focus:outline-hidden cursor-pointer"
             >
               <option value="ALL">All Staff</option>
-              <option value="Golden Nwonu">Golden Nwonu (goldennwonu@gmail.com)</option>
+              <option value="Admin">Admin (flofamous.edu.ng)</option>
               {authorsList
-                .filter((a) => a.name !== 'Golden Nwonu')
+                .filter((a) => a.name !== 'Admin')
                 .map((a, idx) => (
                   <option key={idx} value={a.email || a.name}>
                     {a.name} {a.email ? `(${a.email})` : ''}

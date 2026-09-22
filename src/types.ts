@@ -10,7 +10,16 @@ export type PaymentMethod = 'Cash' | 'Bank Transfer' | 'POS' | 'Card' | 'Online 
 
 export type PaymentStatus = 'NOT PAID' | 'PARTIALLY PAID' | 'FULLY PAID' | 'OVERPAID';
 
-export type UserRole = 'Super Admin' | 'Administrator' | 'Accountant' | 'Registrar' | 'Teacher' | 'Viewer';
+export type UserRole =
+  | 'Admin'
+  | 'Accounts'
+  | 'Cashier'
+  | 'Teacher'
+  | 'Super Admin'
+  | 'Administrator'
+  | 'Accountant'
+  | 'Registrar'
+  | 'Viewer';
 
 export type UserStatus = 'Active' | 'Disabled' | 'Inactive';
 
