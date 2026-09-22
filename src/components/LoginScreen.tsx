@@ -1,21 +1,88 @@
 import React, { useState } from 'react';
-import { School, Lock, Mail, ArrowRight, ShieldCheck, UserCheck } from 'lucide-react';
+import {
+  School,
+  Lock,
+  Mail,
+  ArrowRight,
+  ShieldCheck,
+  User,
+  Eye,
+  EyeOff,
+  UserCheck,
+  Sparkles,
+  CheckCircle2,
+} from 'lucide-react';
 import { useApp } from '../context/AppContext';
+import { UserRole } from '../types';
 
 export const LoginScreen: React.FC = () => {
-  const { login, users, schoolSettings } = useApp();
-  const [email, setEmail] = useState('director@flofamous.edu.ng');
-  const [password, setPassword] = useState('admin123');
+  const { login, signup, users, notify } = useApp();
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const [mode, setMode] = useState<'signin' | 'signup'>('signin');
+
+  // Sign In form fields
+  const [signInEmail, setSignInEmail] = useState('goldennwonu@gmail.com');
+  const [signInPassword, setSignInPassword] = useState('admin123');
+  const [showSignInPassword, setShowSignInPassword] = useState(false);
+
+  // Sign Up form fields
+  const [signUpName, setSignUpName] = useState('');
+  const [signUpEmail, setSignUpEmail] = useState('');
+  const [signUpPassword, setSignUpPassword] = useState('');
+  const [signUpConfirmPassword, setSignUpConfirmPassword] = useState('');
+  const [signUpRole, setSignUpRole] = useState<UserRole>('Accountant');
+  const [showSignUpPassword, setShowSignUpPassword] = useState(false);
+  const [showSignUpConfirmPassword, setShowSignUpConfirmPassword] = useState(false);
+
+  const handleSignInSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    login(email.trim(), password);
+    if (!signInEmail.trim()) {
+      notify('Please enter your staff email.', 'warning');
+      return;
+    }
+    login(signInEmail.trim(), signInPassword);
   };
 
-  const handleQuickLogin = (userEmail: string) => {
-    setEmail(userEmail);
-    setPassword('admin123');
-    login(userEmail, 'admin123');
+  const handleSignUpSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+
+    if (!signUpName.trim()) {
+      notify('Please enter your full name.', 'warning');
+      return;
+    }
+    if (!signUpEmail.trim()) {
+      notify('Please enter your email address.', 'warning');
+      return;
+    }
+    if (!signUpPassword) {
+      notify('Please create a password.', 'warning');
+      return;
+    }
+    if (signUpPassword.length < 5) {
+      notify('Password must be at least 5 characters.', 'warning');
+      return;
+    }
+    if (signUpPassword !== signUpConfirmPassword) {
+      notify('Passwords do not match. Please verify both fields.', 'error');
+      return;
+    }
+
+    const success = signup({
+      name: signUpName.trim(),
+      email: signUpEmail.trim().toLowerCase(),
+      password: signUpPassword,
+      role: signUpRole,
+    });
+
+    if (success) {
+      // User is logged in automatically by AppContext
+    }
+  };
+
+  const handleQuickLogin = (email: string) => {
+    setSignInEmail(email);
+    setSignInPassword('admin123');
+    login(email, 'admin123');
   };
 
   return (
@@ -37,108 +104,329 @@ export const LoginScreen: React.FC = () => {
             FLO FAMOUS SCHOOL
           </h1>
           <p className="text-xs text-amber-300 font-medium">
-            Secondary & Primary School, Nigeria
+            Secondary & Primary School, Enugu, Nigeria
           </p>
           <p className="text-xs text-emerald-200/80 max-w-xs mx-auto">
-            Spreadsheet-Style Administration & Fee Management System
+            Spreadsheet-Style Administration & Live Fee Management System
           </p>
         </div>
 
-        {/* Login Box */}
+        {/* Auth Box with Sign In / Sign Up Mode Switcher */}
         <div className="bg-white rounded-3xl p-6 sm:p-8 shadow-2xl border border-emerald-800/40 space-y-5 text-xs">
-          <div className="text-center border-b border-slate-100 pb-3">
-            <h2 className="text-sm sm:text-base font-bold text-slate-900 font-display">
-              Authorized Staff Portal Login
-            </h2>
-            <p className="text-xs text-slate-500 mt-0.5">
-              Enter your verified staff email and password
-            </p>
-          </div>
-
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div>
-              <label className="block font-semibold text-slate-700 mb-1">
-                Staff Email
-              </label>
-              <div className="relative">
-                <Mail className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
-                <input
-                  type="email"
-                  required
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  placeholder="name@flofamous.edu.ng"
-                  className="w-full pl-9 pr-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs sm:text-sm font-medium text-slate-900 focus:outline-hidden focus:bg-white focus:ring-2 focus:ring-emerald-600"
-                />
-              </div>
-            </div>
-
-            <div>
-              <label className="block font-semibold text-slate-700 mb-1">
-                Password
-              </label>
-              <div className="relative">
-                <Lock className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
-                <input
-                  type="password"
-                  required
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  placeholder="••••••••"
-                  className="w-full pl-9 pr-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs sm:text-sm font-mono text-slate-900 focus:outline-hidden focus:bg-white focus:ring-2 focus:ring-emerald-600"
-                />
-              </div>
-            </div>
-
+          {/* Mode Switch Tabs */}
+          <div className="flex items-center bg-slate-100 p-1 rounded-2xl border border-slate-200">
             <button
-              id="btn-login-submit"
-              type="submit"
-              className="w-full py-3 px-4 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white font-bold text-xs sm:text-sm shadow-md shadow-emerald-700/30 transition-all flex items-center justify-center gap-2"
+              id="tab-btn-signin"
+              type="button"
+              onClick={() => setMode('signin')}
+              className={`flex-1 py-2 rounded-xl font-bold text-xs transition-all flex items-center justify-center gap-1.5 ${
+                mode === 'signin'
+                  ? 'bg-white text-emerald-900 shadow-xs border border-slate-200/60'
+                  : 'text-slate-600 hover:text-slate-900'
+              }`}
             >
-              <span>Sign In to System</span>
-              <ArrowRight className="w-4 h-4" />
+              <Lock className="w-3.5 h-3.5" />
+              <span>Sign In</span>
             </button>
-          </form>
-
-          {/* Quick Demo Staff Logins */}
-          <div className="pt-3 border-t border-slate-100">
-            <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider text-center mb-2">
-              Quick 1-Click Role Login:
-            </div>
-            <div className="grid grid-cols-2 gap-2">
-              <button
-                onClick={() => handleQuickLogin('director@flofamous.edu.ng')}
-                className="p-2 rounded-xl border border-slate-200 hover:border-emerald-600 bg-slate-50 hover:bg-emerald-50/50 text-left transition-all"
-              >
-                <div className="font-bold text-slate-900 text-[11px] truncate">Dr. F. Okoye</div>
-                <div className="text-[10px] text-purple-700 font-semibold">Super Admin (Director)</div>
-              </button>
-
-              <button
-                onClick={() => handleQuickLogin('bursar@flofamous.edu.ng')}
-                className="p-2 rounded-xl border border-slate-200 hover:border-emerald-600 bg-slate-50 hover:bg-emerald-50/50 text-left transition-all"
-              >
-                <div className="font-bold text-slate-900 text-[11px] truncate">Mrs. C. Eze</div>
-                <div className="text-[10px] text-emerald-700 font-semibold">Accountant (Bursar)</div>
-              </button>
-
-              <button
-                onClick={() => handleQuickLogin('registrar@flofamous.edu.ng')}
-                className="p-2 rounded-xl border border-slate-200 hover:border-emerald-600 bg-slate-50 hover:bg-emerald-50/50 text-left transition-all"
-              >
-                <div className="font-bold text-slate-900 text-[11px] truncate">Mr. B. Nwachukwu</div>
-                <div className="text-[10px] text-blue-700 font-semibold">Registrar</div>
-              </button>
-
-              <button
-                onClick={() => handleQuickLogin('teacher.pri4@flofamous.edu.ng')}
-                className="p-2 rounded-xl border border-slate-200 hover:border-emerald-600 bg-slate-50 hover:bg-emerald-50/50 text-left transition-all"
-              >
-                <div className="font-bold text-slate-900 text-[11px] truncate">Mrs. O. Okafor</div>
-                <div className="text-[10px] text-amber-700 font-semibold">Teacher (Primary 4)</div>
-              </button>
-            </div>
+            <button
+              id="tab-btn-signup"
+              type="button"
+              onClick={() => setMode('signup')}
+              className={`flex-1 py-2 rounded-xl font-bold text-xs transition-all flex items-center justify-center gap-1.5 ${
+                mode === 'signup'
+                  ? 'bg-emerald-700 text-white shadow-xs'
+                  : 'text-slate-600 hover:text-slate-900'
+              }`}
+            >
+              <Sparkles className="w-3.5 h-3.5" />
+              <span>Sign Up / Register</span>
+            </button>
           </div>
+
+          {/* Mode 1: SIGN IN FORM */}
+          {mode === 'signin' && (
+            <div className="space-y-4">
+              <div className="text-center pb-1">
+                <h2 className="text-sm sm:text-base font-bold text-slate-900 font-display">
+                  Authorized Staff Sign In
+                </h2>
+                <p className="text-xs text-slate-500 mt-0.5">
+                  Enter your email and password to access the live dashboard
+                </p>
+              </div>
+
+              <form onSubmit={handleSignInSubmit} className="space-y-3.5">
+                <div>
+                  <label className="block font-semibold text-slate-700 mb-1">
+                    Staff Email
+                  </label>
+                  <div className="relative">
+                    <Mail className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+                    <input
+                      id="input-signin-email"
+                      type="email"
+                      required
+                      value={signInEmail}
+                      onChange={(e) => setSignInEmail(e.target.value)}
+                      placeholder="e.g. goldennwonu@gmail.com"
+                      className="w-full pl-9 pr-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs sm:text-sm font-medium text-slate-900 focus:outline-hidden focus:bg-white focus:ring-2 focus:ring-emerald-600"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <div className="flex items-center justify-between mb-1">
+                    <label className="font-semibold text-slate-700">
+                      Password
+                    </label>
+                    <span className="text-[10px] text-emerald-700 font-medium">
+                      Default: admin123
+                    </span>
+                  </div>
+                  <div className="relative">
+                    <Lock className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+                    <input
+                      id="input-signin-password"
+                      type={showSignInPassword ? 'text' : 'password'}
+                      required
+                      value={signInPassword}
+                      onChange={(e) => setSignInPassword(e.target.value)}
+                      placeholder="••••••••"
+                      className="w-full pl-9 pr-10 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs sm:text-sm font-mono text-slate-900 focus:outline-hidden focus:bg-white focus:ring-2 focus:ring-emerald-600"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowSignInPassword(!showSignInPassword)}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 p-1"
+                      title={showSignInPassword ? 'Hide password' : 'Show password'}
+                    >
+                      {showSignInPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                    </button>
+                  </div>
+                </div>
+
+                <button
+                  id="btn-login-submit"
+                  type="submit"
+                  className="w-full py-3 px-4 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white font-bold text-xs sm:text-sm shadow-md shadow-emerald-700/30 transition-all flex items-center justify-center gap-2 cursor-pointer"
+                >
+                  <span>Sign In & Open Dashboard</span>
+                  <ArrowRight className="w-4 h-4" />
+                </button>
+              </form>
+
+              {/* Link to Sign Up */}
+              <div className="text-center pt-2">
+                <button
+                  type="button"
+                  onClick={() => setMode('signup')}
+                  className="text-xs text-emerald-700 hover:text-emerald-800 font-semibold inline-flex items-center gap-1"
+                >
+                  <span>Received an email invitation or need an account?</span>
+                  <strong className="underline">Sign Up here</strong>
+                </button>
+              </div>
+
+              {/* Quick 1-Click Role Logins */}
+              <div className="pt-3 border-t border-slate-100">
+                <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider text-center mb-2">
+                  Quick 1-Click Role Login for Testing:
+                </div>
+                <div className="grid grid-cols-2 gap-2">
+                  <button
+                    type="button"
+                    onClick={() => handleQuickLogin('goldennwonu@gmail.com')}
+                    className="p-2 rounded-xl border border-slate-200 hover:border-emerald-600 bg-slate-50 hover:bg-emerald-50/50 text-left transition-all"
+                  >
+                    <div className="font-bold text-slate-900 text-[11px] truncate">Golden Nwonu</div>
+                    <div className="text-[10px] text-purple-700 font-semibold">Super Admin (Host)</div>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => handleQuickLogin('bursar@flofamous.edu.ng')}
+                    className="p-2 rounded-xl border border-slate-200 hover:border-emerald-600 bg-slate-50 hover:bg-emerald-50/50 text-left transition-all"
+                  >
+                    <div className="font-bold text-slate-900 text-[11px] truncate">Mrs. Chioma Eze</div>
+                    <div className="text-[10px] text-emerald-700 font-semibold">Accountant (Bursar)</div>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => handleQuickLogin('registrar@flofamous.edu.ng')}
+                    className="p-2 rounded-xl border border-slate-200 hover:border-emerald-600 bg-slate-50 hover:bg-emerald-50/50 text-left transition-all"
+                  >
+                    <div className="font-bold text-slate-900 text-[11px] truncate">Mr. B. Nwachukwu</div>
+                    <div className="text-[10px] text-blue-700 font-semibold">Registrar</div>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => handleQuickLogin('teacher.pri4@flofamous.edu.ng')}
+                    className="p-2 rounded-xl border border-slate-200 hover:border-emerald-600 bg-slate-50 hover:bg-emerald-50/50 text-left transition-all"
+                  >
+                    <div className="font-bold text-slate-900 text-[11px] truncate">Mrs. Oluchi Okafor</div>
+                    <div className="text-[10px] text-amber-700 font-semibold">Teacher (Primary 4)</div>
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Mode 2: SIGN UP / REGISTER FORM */}
+          {mode === 'signup' && (
+            <div className="space-y-4">
+              <div className="text-center pb-1">
+                <h2 className="text-sm sm:text-base font-bold text-slate-900 font-display">
+                  Staff Account Registration
+                </h2>
+                <p className="text-xs text-slate-500 mt-0.5">
+                  Enter your name, email, and choose a password to access your dashboard
+                </p>
+              </div>
+
+              <div className="p-2.5 rounded-xl bg-emerald-50 border border-emerald-200/80 text-[11px] text-emerald-800 flex items-start gap-2">
+                <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
+                <span>
+                  <strong>Invited via email?</strong> Use your invited email address to automatically link and activate your staff access.
+                </span>
+              </div>
+
+              <form onSubmit={handleSignUpSubmit} className="space-y-3">
+                {/* Full Name */}
+                <div>
+                  <label className="block font-semibold text-slate-700 mb-1">
+                    Your Full Name *
+                  </label>
+                  <div className="relative">
+                    <User className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+                    <input
+                      id="input-signup-name"
+                      type="text"
+                      required
+                      value={signUpName}
+                      onChange={(e) => setSignUpName(e.target.value)}
+                      placeholder="e.g. Golden Nwonu or Dr. Chinedu Eze"
+                      className="w-full pl-9 pr-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs sm:text-sm font-medium text-slate-900 focus:outline-hidden focus:bg-white focus:ring-2 focus:ring-emerald-600"
+                    />
+                  </div>
+                </div>
+
+                {/* Email Address */}
+                <div>
+                  <label className="block font-semibold text-slate-700 mb-1">
+                    Staff Email Address *
+                  </label>
+                  <div className="relative">
+                    <Mail className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+                    <input
+                      id="input-signup-email"
+                      type="email"
+                      required
+                      value={signUpEmail}
+                      onChange={(e) => setSignUpEmail(e.target.value)}
+                      placeholder="e.g. name@flofamous.edu.ng"
+                      className="w-full pl-9 pr-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs sm:text-sm font-medium text-slate-900 focus:outline-hidden focus:bg-white focus:ring-2 focus:ring-emerald-600"
+                    />
+                  </div>
+                </div>
+
+                {/* Staff Role */}
+                <div>
+                  <label className="block font-semibold text-slate-700 mb-1">
+                    Assigned Role *
+                  </label>
+                  <div className="relative">
+                    <ShieldCheck className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+                    <select
+                      id="select-signup-role"
+                      value={signUpRole}
+                      onChange={(e) => setSignUpRole(e.target.value as UserRole)}
+                      className="w-full pl-9 pr-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs sm:text-sm font-semibold text-slate-900 focus:outline-hidden focus:bg-white focus:ring-2 focus:ring-emerald-600"
+                    >
+                      <option value="Super Admin">Super Admin (Director)</option>
+                      <option value="Administrator">Administrator</option>
+                      <option value="Accountant">Accountant (Bursar)</option>
+                      <option value="Registrar">Registrar</option>
+                      <option value="Teacher">Teacher / Class Head</option>
+                    </select>
+                  </div>
+                </div>
+
+                {/* Password */}
+                <div>
+                  <label className="block font-semibold text-slate-700 mb-1">
+                    Choose Password * (Min 5 chars)
+                  </label>
+                  <div className="relative">
+                    <Lock className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+                    <input
+                      id="input-signup-password"
+                      type={showSignUpPassword ? 'text' : 'password'}
+                      required
+                      minLength={5}
+                      value={signUpPassword}
+                      onChange={(e) => setSignUpPassword(e.target.value)}
+                      placeholder="••••••••"
+                      className="w-full pl-9 pr-10 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs sm:text-sm font-mono text-slate-900 focus:outline-hidden focus:bg-white focus:ring-2 focus:ring-emerald-600"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowSignUpPassword(!showSignUpPassword)}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 p-1"
+                    >
+                      {showSignUpPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                    </button>
+                  </div>
+                </div>
+
+                {/* Confirm Password */}
+                <div>
+                  <label className="block font-semibold text-slate-700 mb-1">
+                    Confirm Password *
+                  </label>
+                  <div className="relative">
+                    <Lock className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+                    <input
+                      id="input-signup-confirm-password"
+                      type={showSignUpConfirmPassword ? 'text' : 'password'}
+                      required
+                      value={signUpConfirmPassword}
+                      onChange={(e) => setSignUpConfirmPassword(e.target.value)}
+                      placeholder="••••••••"
+                      className="w-full pl-9 pr-10 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs sm:text-sm font-mono text-slate-900 focus:outline-hidden focus:bg-white focus:ring-2 focus:ring-emerald-600"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowSignUpConfirmPassword(!showSignUpConfirmPassword)}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 p-1"
+                    >
+                      {showSignUpConfirmPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                    </button>
+                  </div>
+                </div>
+
+                <button
+                  id="btn-signup-submit"
+                  type="submit"
+                  className="w-full mt-2 py-3 px-4 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white font-bold text-xs sm:text-sm shadow-md shadow-emerald-700/30 transition-all flex items-center justify-center gap-2 cursor-pointer"
+                >
+                  <Sparkles className="w-4 h-4" />
+                  <span>Create Account & Enter Dashboard</span>
+                </button>
+              </form>
+
+              <div className="text-center pt-1">
+                <button
+                  type="button"
+                  onClick={() => setMode('signin')}
+                  className="text-xs text-slate-600 hover:text-emerald-700 font-semibold"
+                >
+                  Already have an account? <strong className="text-emerald-700 underline">Sign In</strong>
+                </button>
+              </div>
+            </div>
+          )}
         </div>
 
         <div className="text-center text-[11px] text-emerald-300/70">

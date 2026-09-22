@@ -281,8 +281,18 @@ export const UsersView: React.FC = () => {
                   type="text"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="w-full px-3 py-2 border border-slate-200 rounded-xl font-mono"
+                  className="w-full px-3 py-2 border border-slate-200 rounded-xl font-mono text-xs sm:text-sm"
                 />
+              </div>
+
+              <div className="p-3 rounded-xl bg-amber-50 border border-amber-200/80 text-[11px] text-amber-900 space-y-1">
+                <div className="font-bold flex items-center gap-1.5 text-amber-950">
+                  <CheckCircle2 className="w-3.5 h-3.5 text-amber-600" />
+                  <span>Direct Self-Signup Supported:</span>
+                </div>
+                <p>
+                  The user can also visit the portal, select <strong>Sign Up / Register</strong>, input this email with their name and chosen password, and immediately log into their live dashboard!
+                </p>
               </div>
 
               <div className="flex items-center justify-end gap-2 pt-3">

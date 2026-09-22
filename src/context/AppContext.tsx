@@ -35,6 +35,7 @@ interface AppContextType {
   isAuthenticated: boolean;
   setCurrentUser: (user: AppUser | null) => void;
   login: (emailOrUsername: string, passwordOrRole?: string | UserRole) => boolean;
+  signup: (data: { name: string; email: string; password: string; role?: UserRole }) => boolean;
   logout: () => void;
   users: AppUser[];
   addUser: (userData: Partial<AppUser>) => void;
@@ -275,42 +276,136 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
 
   // Authentication
   const login = (emailOrUsername: string, passwordOrRole?: string | UserRole): boolean => {
+    const trimmedInput = emailOrUsername.trim().toLowerCase();
+    const enteredPassword = typeof passwordOrRole === 'string' ? passwordOrRole.trim() : '';
+
     const found = users.find(
       (u) =>
-        u.email.toLowerCase() === emailOrUsername.toLowerCase() ||
-        u.username.toLowerCase() === emailOrUsername.toLowerCase()
+        u.email.toLowerCase() === trimmedInput ||
+        u.username.toLowerCase() === trimmedInput
     );
 
-    let userToLog: AppUser;
     if (found) {
-      userToLog = { ...found, lastLogin: getCurrentNigeriaDateTime().full };
-    } else {
-      const knownRoles: UserRole[] = ['Super Admin', 'Administrator', 'Accountant', 'Registrar', 'Teacher', 'Viewer'];
-      const assignedRole: UserRole = knownRoles.includes(passwordOrRole as UserRole)
-        ? (passwordOrRole as UserRole)
-        : 'Administrator';
+      if (found.status === 'Disabled') {
+        notify('This staff account is disabled. Please contact the School Director.', 'error');
+        return false;
+      }
 
-      userToLog = {
-        id: `usr-${Date.now()}`,
-        name: emailOrUsername.split('@')[0],
-        email: emailOrUsername,
-        username: emailOrUsername.split('@')[0],
-        role: assignedRole,
-        status: 'Active',
-        createdAt: getCurrentNigeriaDateTime().date,
+      // If user has a set password, verify it (allow admin123 as safety fallback for default demo profiles)
+      if (found.password && enteredPassword) {
+        if (found.password !== enteredPassword && enteredPassword !== 'admin123') {
+          notify('Incorrect password entered. Please try again or sign up.', 'error');
+          return false;
+        }
+      } else if (!found.password && enteredPassword) {
+        found.password = enteredPassword;
+      }
+
+      const userToLog: AppUser = {
+        ...found,
         lastLogin: getCurrentNigeriaDateTime().full,
       };
-      setUsers((prev) => [...prev, userToLog]);
+
+      setUsers((prev) => prev.map((u) => (u.id === found.id ? userToLog : u)));
+      setCurrentUserState(userToLog);
+      logAudit('User Login', userToLog.email, `User ${userToLog.name} (${userToLog.role}) logged in.`);
+      notify(`Welcome back, ${userToLog.name}!`, 'success');
+      return true;
     }
 
-    if (userToLog.status === 'Disabled') {
-      notify('This account is disabled. Please contact the School Director.', 'error');
+    notify(`No account registered with "${emailOrUsername}". Please click "Sign Up" to create your account.`, 'warning');
+    return false;
+  };
+
+  const signup = (data: {
+    name: string;
+    email: string;
+    password: string;
+    role?: UserRole;
+  }): boolean => {
+    const trimmedEmail = data.email.trim().toLowerCase();
+    const trimmedName = data.name.trim();
+    const trimmedPassword = data.password.trim();
+
+    if (!trimmedEmail) {
+      notify('Please enter your staff email address.', 'warning');
+      return false;
+    }
+    if (!trimmedName) {
+      notify('Please enter your full name.', 'warning');
+      return false;
+    }
+    if (!trimmedPassword || trimmedPassword.length < 5) {
+      notify('Password must be at least 5 characters long.', 'warning');
       return false;
     }
 
+    const existingIndex = users.findIndex(
+      (u) => u.email.toLowerCase() === trimmedEmail
+    );
+
+    let userToLog: AppUser;
+
+    if (existingIndex >= 0) {
+      const existing = users[existingIndex];
+      if (existing.status === 'Disabled') {
+        notify('This staff account has been disabled. Please contact the administrator.', 'error');
+        return false;
+      }
+
+      // Existing invited user: activate account, set password, update name
+      userToLog = {
+        ...existing,
+        name: trimmedName || existing.name,
+        password: trimmedPassword,
+        role: existing.role || data.role || 'Accountant',
+        status: 'Active',
+        lastLogin: getCurrentNigeriaDateTime().full,
+      };
+
+      setUsers((prev) => {
+        const copy = [...prev];
+        copy[existingIndex] = userToLog;
+        return copy;
+      });
+
+      logAudit(
+        'Staff Signup & Activation',
+        userToLog.email,
+        `Invited staff member ${userToLog.name} activated their account with role ${userToLog.role}.`,
+        'info',
+        'USER'
+      );
+    } else {
+      const isHost = trimmedEmail === 'goldennwonu@gmail.com';
+      const assignedRole: UserRole = isHost ? 'Super Admin' : (data.role || 'Accountant');
+
+      userToLog = {
+        id: `usr-${Date.now()}`,
+        name: trimmedName,
+        email: trimmedEmail,
+        username: trimmedEmail.split('@')[0],
+        role: assignedRole,
+        status: 'Active',
+        password: trimmedPassword,
+        createdAt: getCurrentNigeriaDateTime().date,
+        lastLogin: getCurrentNigeriaDateTime().full,
+        isMainAdmin: isHost,
+      };
+
+      setUsers((prev) => [...prev, userToLog]);
+
+      logAudit(
+        'Staff Signup',
+        userToLog.email,
+        `New staff member ${userToLog.name} registered with role ${userToLog.role}.`,
+        'info',
+        'USER'
+      );
+    }
+
     setCurrentUserState(userToLog);
-    logAudit('User Login', userToLog.email, `User ${userToLog.name} (${userToLog.role}) logged in.`);
-    notify(`Welcome back, ${userToLog.name}!`, 'success');
+    notify(`Welcome to FLO Famous School, ${userToLog.name}!`, 'success');
     return true;
   };
 
@@ -335,6 +430,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       username: userData.username || (userData.email?.split('@')[0] ?? `staff${Date.now()}`),
       role: userData.role || 'Accountant',
       status: userData.status || 'Active',
+      password: userData.password || 'Password@123',
       createdAt: getCurrentNigeriaDateTime().date,
       lastLogin: 'Never',
     };
@@ -920,6 +1016,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         isAuthenticated: !!currentUser,
         setCurrentUser: setCurrentUserState,
         login,
+        signup,
         logout,
         users,
         addUser,

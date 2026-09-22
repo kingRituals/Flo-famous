@@ -12,6 +12,9 @@ import {
   ArrowUpRight,
   Eye,
   FileText,
+  UserCheck,
+  ShieldCheck,
+  Sparkles,
 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import { formatNaira, formatDate } from '../utils/formatters';
@@ -22,6 +25,7 @@ interface DashboardViewProps {
 
 export const DashboardView: React.FC<DashboardViewProps> = ({ onNavigateToTab }) => {
   const {
+    currentUser,
     students,
     classes,
     payments,
@@ -81,18 +85,24 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ onNavigateToTab })
 
   return (
     <div id="dashboard-view-container" className="space-y-6">
-      {/* Welcome & Session Banner */}
+      {/* Welcome & Session Banner with Logged-in Staff Name */}
       <div className="bg-gradient-to-r from-emerald-950 via-emerald-900 to-emerald-950 rounded-2xl p-5 sm:p-6 text-white shadow-md border border-emerald-800 flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-400/20 text-amber-300 text-xs font-semibold border border-amber-400/30 mb-2">
-            <School className="w-3.5 h-3.5" />
-            <span>FLO Famous Secondary and Primary School, Nigeria</span>
+          <div className="flex flex-wrap items-center gap-2 mb-2">
+            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-400/20 text-amber-300 text-xs font-semibold border border-amber-400/30">
+              <School className="w-3.5 h-3.5" />
+              <span>FLO Famous Secondary and Primary School, Nigeria</span>
+            </span>
+            <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 text-xs font-semibold border border-emerald-400/30">
+              <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+              <span>Live System Connected</span>
+            </span>
           </div>
-          <h2 className="text-xl sm:text-2xl font-black tracking-tight text-white font-display">
-            Administrative & Bursary Overview
+          <h2 className="text-xl sm:text-2xl lg:text-3xl font-black tracking-tight text-white font-display">
+            Welcome, {currentUser?.name || 'Staff Member'}! 👋
           </h2>
           <p className="text-xs sm:text-sm text-emerald-200/90 mt-1 max-w-2xl">
-            Live monitoring for active session: <strong className="text-amber-300">{activeSession}</strong> ({activeTerm}). All financial computations and collections reflect live entries.
+            Logged in as <strong className="text-white font-semibold">{currentUser?.name}</strong> ({currentUser?.role}). Active session: <strong className="text-amber-300">{activeSession}</strong> ({activeTerm}). All financial computations, student fees, and ledger records reflect live entries in real time.
           </p>
         </div>
 
@@ -100,7 +110,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ onNavigateToTab })
           <button
             id="btn-dash-open-table"
             onClick={() => onNavigateToTab('excel-table')}
-            className="px-4 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs sm:text-sm shadow-sm transition-colors flex items-center gap-1.5"
+            className="px-4 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs sm:text-sm shadow-sm transition-colors flex items-center gap-1.5 cursor-pointer"
           >
             <span>Open Excel Fee Table</span>
             <ArrowUpRight className="w-4 h-4" />
@@ -108,10 +118,79 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ onNavigateToTab })
           <button
             id="btn-dash-record-payment"
             onClick={() => openRecordPayment()}
-            className="px-4 py-2.5 rounded-xl bg-white/10 hover:bg-white/20 text-white font-semibold text-xs sm:text-sm border border-white/20 transition-colors flex items-center gap-1.5"
+            className="px-4 py-2.5 rounded-xl bg-white/10 hover:bg-white/20 text-white font-semibold text-xs sm:text-sm border border-white/20 transition-colors flex items-center gap-1.5 cursor-pointer"
           >
             <CreditCard className="w-4 h-4 text-emerald-300" />
             <span>Record Payment</span>
+          </button>
+        </div>
+      </div>
+
+      {/* Staff Live Status & Quick Action Ribbon */}
+      <div className="bg-white border border-slate-200/80 rounded-2xl p-4 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div className="flex items-center gap-3.5">
+          <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-emerald-600 to-emerald-800 text-white flex items-center justify-center font-bold text-base shadow-sm ring-2 ring-emerald-500/20 shrink-0">
+            {currentUser?.name
+              ? currentUser.name
+                  .split(' ')
+                  .map((n) => n[0])
+                  .slice(0, 2)
+                  .join('')
+                  .toUpperCase()
+              : 'ST'}
+          </div>
+          <div>
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="font-bold text-slate-900 text-sm sm:text-base">
+                {currentUser?.name || 'Staff Member'}
+              </span>
+              <span className="px-2 py-0.5 rounded-md text-[11px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-200">
+                {currentUser?.role || 'Staff'}
+              </span>
+              {currentUser?.isMainAdmin && (
+                <span className="px-2 py-0.5 rounded-md text-[10px] font-bold bg-purple-100 text-purple-800 border border-purple-200">
+                  Host Director
+                </span>
+              )}
+            </div>
+            <div className="text-xs text-slate-500 flex flex-wrap items-center gap-2 mt-0.5">
+              <span>{currentUser?.email}</span>
+              <span>•</span>
+              <span className="text-emerald-700 font-medium inline-flex items-center gap-1">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                Session Active (Live Dashboard)
+              </span>
+            </div>
+          </div>
+        </div>
+
+        <div className="flex flex-wrap items-center gap-2 text-xs">
+          <button
+            onClick={() => onNavigateToTab('students')}
+            className="px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold transition-colors flex items-center gap-1.5 cursor-pointer"
+          >
+            <Users className="w-3.5 h-3.5 text-slate-500" />
+            <span>Students ({students.length})</span>
+          </button>
+          <button
+            onClick={() => onNavigateToTab('outstanding')}
+            className="px-3 py-1.5 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-700 font-semibold border border-rose-200 transition-colors flex items-center gap-1.5 cursor-pointer"
+          >
+            <AlertCircle className="w-3.5 h-3.5 text-rose-500" />
+            <span>Debtors ({schoolFinancials.notPaidCount + schoolFinancials.partiallyPaidCount})</span>
+          </button>
+          <button
+            onClick={() => onNavigateToTab('payments')}
+            className="px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold transition-colors flex items-center gap-1.5 cursor-pointer"
+          >
+            <Receipt className="w-3.5 h-3.5 text-slate-500" />
+            <span>Payments ({payments.length})</span>
+          </button>
+          <button
+            onClick={() => onNavigateToTab('excel-table')}
+            className="px-3 py-1.5 rounded-xl bg-amber-50 hover:bg-amber-100 text-amber-800 font-semibold border border-amber-200 transition-colors flex items-center gap-1.5 cursor-pointer"
+          >
+            <span>Live Spreadsheet Grid</span>
           </button>
         </div>
       </div>

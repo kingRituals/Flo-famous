@@ -117,13 +117,16 @@ export const Sidebar: React.FC<SidebarProps> = ({
             {currentUser?.name?.charAt(0) || 'U'}
           </div>
           <div className="min-w-0 flex-1">
-            <div className="text-xs font-semibold text-white truncate">
+            <div className="text-xs font-bold text-white truncate">
               {currentUser?.name || 'Authorized Staff'}
             </div>
+            <div className="text-[10px] text-emerald-300/80 truncate">
+              {currentUser?.email}
+            </div>
             <div className="flex items-center gap-1.5 mt-0.5">
-              <span className="inline-block w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
-              <span className="text-[10px] font-medium text-emerald-200 uppercase tracking-wider">
-                {currentUser?.role || 'Staff'}
+              <span className="inline-block w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+              <span className="text-[10px] font-semibold text-emerald-200 uppercase tracking-wider">
+                {currentUser?.role || 'Staff'} • Live
               </span>
             </div>
           </div>

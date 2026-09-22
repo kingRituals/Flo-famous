@@ -63,7 +63,7 @@ const INITIAL_SESSIONS: AcademicSession[] = [
   },
 ];
 
-// Host Admin: goldennwonu@gmail.com
+// Host Admin & Authorized Staff
 const INITIAL_USERS: AppUser[] = [
   {
     id: 'usr-golden-nwonu',
@@ -72,9 +72,40 @@ const INITIAL_USERS: AppUser[] = [
     username: 'goldennwonu',
     role: 'Super Admin',
     status: 'Active',
+    password: 'admin123',
     createdAt: '2026-09-21',
     lastLogin: '2026-09-21 09:00:00 AM',
     isMainAdmin: true,
+  },
+  {
+    id: 'usr-bursar',
+    name: 'Mrs. Chioma Eze',
+    email: 'bursar@flofamous.edu.ng',
+    username: 'bursar',
+    role: 'Accountant',
+    status: 'Active',
+    password: 'admin123',
+    createdAt: '2026-09-21',
+  },
+  {
+    id: 'usr-registrar',
+    name: 'Mr. Babatunde Nwachukwu',
+    email: 'registrar@flofamous.edu.ng',
+    username: 'registrar',
+    role: 'Registrar',
+    status: 'Active',
+    password: 'admin123',
+    createdAt: '2026-09-21',
+  },
+  {
+    id: 'usr-teacher-pri4',
+    name: 'Mrs. Oluchi Okafor',
+    email: 'teacher.pri4@flofamous.edu.ng',
+    username: 'teacher.pri4',
+    role: 'Teacher',
+    status: 'Active',
+    password: 'admin123',
+    createdAt: '2026-09-21',
   },
 ];
 
