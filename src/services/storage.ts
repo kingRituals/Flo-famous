@@ -2,6 +2,7 @@ import {
   AcademicSession,
   AppUser,
   AuditLog,
+  ClassFeePricing,
   FeeCategory,
   ParentGuardian,
   PaymentTransaction,
@@ -19,6 +20,7 @@ const STORAGE_KEYS = {
   PARENTS: 'flo_famous_clean_v1_parents',
   FEE_CATEGORIES: 'flo_famous_clean_v1_fee_categories',
   FEE_ASSIGNMENTS: 'flo_famous_clean_v1_fee_assignments',
+  CLASS_FEE_PRICINGS: 'flo_famous_clean_v1_class_fee_pricings',
   PAYMENTS: 'flo_famous_clean_v1_payments',
   AUDIT_LOGS: 'flo_famous_clean_v1_audit_logs',
   SETTINGS: 'flo_famous_clean_v1_settings',
@@ -151,6 +153,26 @@ const INITIAL_STUDENTS: Student[] = [];
 const INITIAL_FEE_ASSIGNMENTS: StudentFeeAssignment[] = [];
 const INITIAL_PAYMENTS: PaymentTransaction[] = [];
 
+// Initial Class Fee Pricing matrix (Session 2026/2027)
+const INITIAL_CLASS_FEE_PRICINGS: ClassFeePricing[] = INITIAL_CLASSES.map((cls) => {
+  let tuition = 150000;
+  if (cls.name.startsWith('Nursery')) tuition = 120000;
+  else if (cls.section === 'PRIMARY') tuition = 145000;
+  else if (cls.section === 'JUNIOR_SECONDARY') tuition = 175000;
+  else if (cls.section === 'SENIOR_SECONDARY') tuition = 195000;
+
+  return {
+    id: `${cls.id}_2026/2027_ALL`,
+    classId: cls.id,
+    className: cls.name,
+    section: cls.section,
+    academicSession: '2026/2027',
+    term: 'ALL',
+    tuitionFee: tuition,
+    totalFee: tuition,
+  };
+});
+
 const INITIAL_AUDIT_LOGS: AuditLog[] = [
   {
     id: 'aud-clean-slate-init',
@@ -196,6 +218,7 @@ export const getInitialData = () => {
     users: loadFromStorage<AppUser[]>(STORAGE_KEYS.USERS, INITIAL_USERS),
     settings: loadFromStorage<SchoolSettings>(STORAGE_KEYS.SETTINGS, INITIAL_SETTINGS),
     feeCategories: loadFromStorage<FeeCategory[]>(STORAGE_KEYS.FEE_CATEGORIES, INITIAL_FEE_CATEGORIES),
+    classFeePricings: loadFromStorage<ClassFeePricing[]>(STORAGE_KEYS.CLASS_FEE_PRICINGS, INITIAL_CLASS_FEE_PRICINGS),
     parents: loadFromStorage<ParentGuardian[]>(STORAGE_KEYS.PARENTS, INITIAL_PARENTS),
     students: loadFromStorage<Student[]>(STORAGE_KEYS.STUDENTS, INITIAL_STUDENTS),
     feeAssignments: loadFromStorage<StudentFeeAssignment[]>(STORAGE_KEYS.FEE_ASSIGNMENTS, INITIAL_FEE_ASSIGNMENTS),
@@ -211,6 +234,7 @@ export const resetToFactoryDefaults = () => {
   localStorage.setItem(STORAGE_KEYS.USERS, JSON.stringify(INITIAL_USERS));
   localStorage.setItem(STORAGE_KEYS.SETTINGS, JSON.stringify(INITIAL_SETTINGS));
   localStorage.setItem(STORAGE_KEYS.FEE_CATEGORIES, JSON.stringify(INITIAL_FEE_CATEGORIES));
+  localStorage.setItem(STORAGE_KEYS.CLASS_FEE_PRICINGS, JSON.stringify(INITIAL_CLASS_FEE_PRICINGS));
   localStorage.setItem(STORAGE_KEYS.PARENTS, JSON.stringify(INITIAL_PARENTS));
   localStorage.setItem(STORAGE_KEYS.STUDENTS, JSON.stringify(INITIAL_STUDENTS));
   localStorage.setItem(STORAGE_KEYS.FEE_ASSIGNMENTS, JSON.stringify(INITIAL_FEE_ASSIGNMENTS));

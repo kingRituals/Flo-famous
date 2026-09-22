@@ -10,6 +10,7 @@ import {
   CreditCard,
   Edit2,
   Trash2,
+  Eraser,
   User,
   Phone,
   CheckCircle,
@@ -18,6 +19,7 @@ import { useApp } from '../context/AppContext';
 import { Student, SchoolSection, StudentStatus } from '../types';
 import { formatNaira, formatDate } from '../utils/formatters';
 import { exportToExcel, exportToCSV } from '../utils/exportUtils';
+import { ClearOrDeleteStudentModal } from './ClearOrDeleteStudentModal';
 
 interface StudentsViewProps {
   onOpenAddModal: () => void;
@@ -38,6 +40,7 @@ export const StudentsView: React.FC<StudentsViewProps> = ({
     openRecordPayment,
     updateStudent,
     deleteStudent,
+    clearStudentName,
     hasPermission,
     notify,
   } = useApp();
@@ -47,6 +50,7 @@ export const StudentsView: React.FC<StudentsViewProps> = ({
   const [selectedClassId, setSelectedClassId] = useState<string>('ALL');
   const [selectedStatus, setSelectedStatus] = useState<string>('ALL');
   const [editingStudent, setEditingStudent] = useState<Student | null>(null);
+  const [selectedStudentForAction, setSelectedStudentForAction] = useState<Student | null>(null);
 
   const filteredStudents = useMemo(() => {
     return students.filter((st) => {
@@ -363,14 +367,10 @@ export const StudentsView: React.FC<StudentsViewProps> = ({
                           )}
                           {hasPermission('deleteStudent') && (
                             <button
-                              id={`btn-student-delete-${st.id}`}
-                              onClick={() => {
-                                if (confirm(`Are you sure you want to delete ${st.fullName}?`)) {
-                                  deleteStudent(st.id);
-                                }
-                              }}
+                              id={`btn-student-clear-delete-${st.id}`}
+                              onClick={() => setSelectedStudentForAction(st)}
                               className="p-1.5 rounded-lg bg-rose-50 text-rose-600 hover:bg-rose-100 transition-colors"
-                              title="Delete Student"
+                              title="Clear Name or Delete Student"
                             >
                               <Trash2 className="w-3.5 h-3.5" />
                             </button>
@@ -396,6 +396,25 @@ export const StudentsView: React.FC<StudentsViewProps> = ({
             <p className="text-xs text-slate-500 mb-4 font-mono">{editingStudent.id}</p>
 
             <form onSubmit={handleSaveEdit} className="space-y-3">
+              <div className="flex items-center justify-between pb-1">
+                <span className="font-semibold text-slate-700">Student Identity Details</span>
+                <button
+                  type="button"
+                  id="btn-edit-clear-name-inputs"
+                  onClick={() => {
+                    setEditingStudent((prev) =>
+                      prev ? { ...prev, firstName: '', middleName: '', lastName: '' } : null
+                    );
+                    notify('Name fields cleared. You can type a new name below.', 'info');
+                  }}
+                  className="px-2.5 py-1 text-[11px] font-semibold text-amber-800 bg-amber-50 hover:bg-amber-100 border border-amber-200 rounded-lg flex items-center gap-1 transition-colors"
+                  title="Clear first, middle and last name inputs"
+                >
+                  <Eraser className="w-3.5 h-3.5 text-amber-700" />
+                  <span>Clear Name Inputs</span>
+                </button>
+              </div>
+
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className="block font-semibold text-slate-700 mb-1">First Name</label>
@@ -503,24 +522,48 @@ export const StudentsView: React.FC<StudentsViewProps> = ({
                 />
               </div>
 
-              <div className="flex items-center justify-end gap-2 pt-3">
+              <div className="flex items-center justify-between gap-2 pt-3 border-t border-slate-100">
                 <button
                   type="button"
-                  onClick={() => setEditingStudent(null)}
-                  className="px-4 py-2 rounded-xl border border-slate-200 text-slate-700 hover:bg-slate-50"
+                  id="btn-edit-open-clear-delete"
+                  onClick={() => {
+                    const target = editingStudent;
+                    setEditingStudent(null);
+                    setSelectedStudentForAction(target);
+                  }}
+                  className="px-3 py-2 rounded-xl text-rose-700 bg-rose-50 hover:bg-rose-100 border border-rose-200 font-semibold flex items-center gap-1.5 transition-colors"
                 >
-                  Cancel
+                  <Trash2 className="w-3.5 h-3.5" />
+                  <span>Clear Name / Delete Student</span>
                 </button>
-                <button
-                  type="submit"
-                  className="px-4 py-2 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white font-bold"
-                >
-                  Save Changes
-                </button>
+
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setEditingStudent(null)}
+                    className="px-4 py-2 rounded-xl border border-slate-200 text-slate-700 hover:bg-slate-50 font-semibold"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    className="px-4 py-2 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white font-bold shadow-xs"
+                  >
+                    Save Changes
+                  </button>
+                </div>
               </div>
             </form>
           </div>
         </div>
+      )}
+
+      {/* Clear or Delete Student Modal */}
+      {selectedStudentForAction && (
+        <ClearOrDeleteStudentModal
+          student={selectedStudentForAction}
+          onClose={() => setSelectedStudentForAction(null)}
+        />
       )}
     </div>
   );

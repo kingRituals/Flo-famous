@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
   X,
   User,
@@ -12,10 +12,12 @@ import {
   Download,
   AlertCircle,
   CheckCircle2,
+  Trash2,
 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import { formatNaira, formatDate } from '../utils/formatters';
 import { generateReportPDF } from '../utils/exportUtils';
+import { ClearOrDeleteStudentModal } from './ClearOrDeleteStudentModal';
 
 interface StudentProfileModalProps {
   studentId: string;
@@ -33,7 +35,10 @@ export const StudentProfileModal: React.FC<StudentProfileModalProps> = ({ studen
     openRecordPayment,
     schoolSettings,
     currentUser,
+    hasPermission,
   } = useApp();
+
+  const [showClearDeleteModal, setShowClearDeleteModal] = useState(false);
 
   const student = students.find((s) => s.id === studentId);
   if (!student) return null;
@@ -142,6 +147,17 @@ export const StudentProfileModal: React.FC<StudentProfileModalProps> = ({ studen
                   <Download className="w-3 h-3 text-emerald-700" />
                   <span>Statement PDF</span>
                 </button>
+                {hasPermission('deleteStudent') && (
+                  <button
+                    id="btn-profile-clear-delete"
+                    onClick={() => setShowClearDeleteModal(true)}
+                    className="px-2.5 py-1 rounded-lg bg-rose-50 border border-rose-200 text-rose-700 hover:bg-rose-100 text-[11px] font-semibold flex items-center gap-1 shadow-2xs transition-colors"
+                    title="Clear Name or Delete Student"
+                  >
+                    <Trash2 className="w-3 h-3 text-rose-600" />
+                    <span>Clear / Delete</span>
+                  </button>
+                )}
                 <button
                   id="btn-profile-record-pay"
                   onClick={() => {
@@ -317,6 +333,19 @@ export const StudentProfileModal: React.FC<StudentProfileModalProps> = ({ studen
           </div>
         </div>
       </div>
+
+      {showClearDeleteModal && (
+        <ClearOrDeleteStudentModal
+          student={student}
+          onClose={() => {
+            setShowClearDeleteModal(false);
+            // If student was deleted, close profile
+            if (!students.some((s) => s.id === student.id)) {
+              onClose();
+            }
+          }}
+        />
+      )}
     </div>
   );
 };

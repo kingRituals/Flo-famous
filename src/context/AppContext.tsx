@@ -3,6 +3,7 @@ import {
   AcademicSession,
   AppUser,
   AuditLog,
+  ClassFeePricing,
   FeeCategory,
   ParentGuardian,
   PaymentTransaction,
@@ -60,6 +61,7 @@ interface AppContextType {
   addStudent: (studentData: Omit<Student, 'id' | 'fullName'>) => Student;
   updateStudent: (id: string, updates: Partial<Student>) => void;
   deleteStudent: (id: string) => void;
+  clearStudentName: (id: string) => void;
   bulkAddStudents: (newStudents: Omit<Student, 'fullName'>[]) => number;
   parents: ParentGuardian[];
   addOrUpdateParent: (parent: ParentGuardian) => void;
@@ -69,6 +71,10 @@ interface AppContextType {
   addFeeCategory: (cat: Omit<FeeCategory, 'id'>) => FeeCategory;
   updateFeeCategory: (id: string, updates: Partial<FeeCategory>) => void;
   deleteFeeCategory: (id: string) => void;
+  classFeePricings: ClassFeePricing[];
+  setClassFeePrice: (classId: string, session: string, amount: number, term?: string, applyToEnrolled?: boolean) => void;
+  batchSetClassFeePrices: (session: string, prices: { classId: string; amount: number; term?: string }[], applyToStudents?: boolean) => void;
+  getClassFeePrice: (classId: string, session?: string, term?: string) => number;
   feeAssignments: StudentFeeAssignment[];
   setStudentFeeAmount: (studentId: string, categoryId: string, amount: number) => void;
   bulkAssignClassFees: (classId: string, feeItems: { categoryId: string; amount: number }[]) => void;
@@ -159,6 +165,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   const [activeTerm, setActiveTermState] = useState<string>(initial.settings.currentTerm || 'First Term');
   const [schoolSettings, setSchoolSettings] = useState<SchoolSettings>(initial.settings);
   const [feeCategories, setFeeCategories] = useState<FeeCategory[]>(initial.feeCategories);
+  const [classFeePricings, setClassFeePricings] = useState<ClassFeePricing[]>(initial.classFeePricings || []);
   const [parents, setParents] = useState<ParentGuardian[]>(initial.parents);
   const [students, setStudents] = useState<Student[]>(initial.students);
   const [feeAssignments, setFeeAssignments] = useState<StudentFeeAssignment[]>(initial.feeAssignments);
@@ -178,6 +185,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   useEffect(() => saveToStorage(STORAGE_KEYS.SESSIONS, sessions), [sessions]);
   useEffect(() => saveToStorage(STORAGE_KEYS.SETTINGS, schoolSettings), [schoolSettings]);
   useEffect(() => saveToStorage(STORAGE_KEYS.FEE_CATEGORIES, feeCategories), [feeCategories]);
+  useEffect(() => saveToStorage(STORAGE_KEYS.CLASS_FEE_PRICINGS, classFeePricings), [classFeePricings]);
   useEffect(() => saveToStorage(STORAGE_KEYS.PARENTS, parents), [parents]);
   useEffect(() => saveToStorage(STORAGE_KEYS.STUDENTS, students), [students]);
   useEffect(() => saveToStorage(STORAGE_KEYS.FEE_ASSIGNMENTS, feeAssignments), [feeAssignments]);
@@ -254,13 +262,13 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     }
 
     if (role === 'Accountant') {
-      // Accountant: fees, students edit, payments, reports. Cannot manage users, sessions, delete database, or security settings.
-      return ['manageFees', 'editStudent', 'recordPayment', 'viewReports'].includes(perm);
+      // Accountant: fees, students edit/delete, payments, reports, settings
+      return ['manageFees', 'editStudent', 'deleteStudent', 'recordPayment', 'viewReports', 'settings'].includes(perm);
     }
 
     if (role === 'Registrar') {
-      // Registrar: students add/edit, view reports, view classes
-      return ['editStudent', 'viewReports', 'recordPayment'].includes(perm);
+      // Registrar: students add/edit/delete, view reports, view classes, recordPayment
+      return ['editStudent', 'deleteStudent', 'viewReports', 'recordPayment'].includes(perm);
     }
 
     if (role === 'Teacher') {
@@ -587,6 +595,8 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       (fc) => !fc.applicableClassId || fc.applicableClassId === 'ALL' || fc.applicableClassId === studentData.classId
     );
 
+    const configuredTuition = getClassFeePrice(studentData.classId, activeSession, activeTerm);
+
     const newAssignments: StudentFeeAssignment[] = defaultFees.map((fc) => ({
       id: `fa-${Date.now()}-${Math.random().toString(36).substr(2, 5)}`,
       studentId: newId,
@@ -594,7 +604,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       term: activeTerm,
       feeCategoryId: fc.id,
       feeCategoryName: fc.name,
-      amount: fc.defaultAmount,
+      amount: fc.name === 'School Fees' ? configuredTuition : fc.defaultAmount,
     }));
 
     if (newAssignments.length > 0) {
@@ -621,15 +631,60 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     notify('Student record updated successfully.', 'success');
   };
 
+  const clearStudentName = (id: string) => {
+    if (!hasPermission('editStudent')) {
+      notify('Insufficient permission to edit student name.', 'error');
+      return;
+    }
+    const student = students.find((s) => s.id === id);
+    if (!student) return;
+
+    setStudents((prev) =>
+      prev.map((s) => {
+        if (s.id === id) {
+          return {
+            ...s,
+            firstName: '',
+            middleName: '',
+            lastName: '',
+            fullName: '[Name Cleared / Pending Update]',
+          };
+        }
+        return s;
+      })
+    );
+    logAudit(
+      'Student Name Cleared',
+      id,
+      `Cleared student name fields for ${id} (previously: ${student.fullName})`,
+      'warning',
+      'STUDENT'
+    );
+    notify(`Name for student ${id} has been cleared. You can now input a new name.`, 'info');
+  };
+
   const deleteStudent = (id: string) => {
     if (!hasPermission('deleteStudent')) {
       notify('Insufficient permission to delete students.', 'error');
       return;
     }
     const student = students.find((s) => s.id === id);
+    if (!student) return;
+
+    // Remove student
     setStudents((prev) => prev.filter((s) => s.id !== id));
-    logAudit('Student Deleted', id, `Deleted student ${student?.fullName || id}`, 'critical', 'STUDENT');
-    notify(`Student ${student?.fullName || id} deleted.`, 'info');
+    // Clean up fee assignments
+    setFeeAssignments((prev) => prev.filter((fa) => fa.studentId !== id));
+    // Remove student from parent profiles
+    setParents((prev) =>
+      prev.map((p) => ({
+        ...p,
+        studentIds: p.studentIds.filter((sid) => sid !== id),
+      }))
+    );
+
+    logAudit('Student Deleted', id, `Deleted student ${student.fullName} (${id})`, 'critical', 'STUDENT');
+    notify(`Student ${student.fullName} (${id}) was deleted.`, 'info');
   };
 
   const bulkAddStudents = (newStudentsData: Omit<Student, 'fullName'>[]): number => {
@@ -768,6 +823,197 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
 
     logAudit('Bulk Fee Assignment', className, `Assigned fees across ${targetStudents.length} students in ${className}`);
     notify(`Bulk fees successfully assigned to all ${targetStudents.length} students in ${className}!`, 'success');
+  };
+
+  const getClassFeePrice = (classId: string, session: string = activeSession, term: string = 'ALL'): number => {
+    // 1. Exact match class, session, and term or 'ALL'
+    const exact = classFeePricings.find(
+      (p) => p.classId === classId && p.academicSession === session && (p.term === term || p.term === 'ALL')
+    );
+    if (exact) return exact.tuitionFee;
+
+    // 2. Class match in any session/term
+    const anyClass = classFeePricings.find((p) => p.classId === classId);
+    if (anyClass) return anyClass.tuitionFee;
+
+    // 3. Fallback based on class name or fee category
+    const targetClass = classes.find((c) => c.id === classId);
+    if (targetClass?.name.startsWith('Nursery')) return 120000;
+    if (targetClass?.section === 'PRIMARY') return 145000;
+    if (targetClass?.section === 'JUNIOR_SECONDARY') return 175000;
+    if (targetClass?.section === 'SENIOR_SECONDARY') return 195000;
+
+    const schoolFeeCat = feeCategories.find((c) => c.name === 'School Fees');
+    return schoolFeeCat ? schoolFeeCat.defaultAmount : 150000;
+  };
+
+  const setClassFeePrice = (
+    classId: string,
+    session: string,
+    amount: number,
+    term: string = 'ALL',
+    applyToEnrolled: boolean = true
+  ) => {
+    const targetClass = classes.find((c) => c.id === classId);
+    const className = targetClass?.name || classId;
+    const section = targetClass?.section || 'PRIMARY';
+
+    setClassFeePricings((prev) => {
+      const idx = prev.findIndex(
+        (p) => p.classId === classId && p.academicSession === session && (p.term === term || (!p.term && term === 'ALL'))
+      );
+      const entry: ClassFeePricing = {
+        id: `${classId}_${session}_${term}`,
+        classId,
+        className,
+        section,
+        academicSession: session,
+        term,
+        tuitionFee: amount,
+        totalFee: amount,
+        lastUpdated: new Date().toISOString(),
+      };
+      if (idx >= 0) {
+        const copy = [...prev];
+        copy[idx] = entry;
+        return copy;
+      }
+      return [...prev, entry];
+    });
+
+    if (applyToEnrolled) {
+      const schoolFeeCat = feeCategories.find((c) => c.name === 'School Fees') || feeCategories[0];
+      if (schoolFeeCat) {
+        setFeeAssignments((prev) => {
+          let updated = [...prev];
+          const enrolled = students.filter((s) => s.classId === classId && s.status === 'Active');
+          const termsToUpdate = term === 'ALL' ? ['First Term', 'Second Term', 'Third Term'] : [term];
+
+          enrolled.forEach((st) => {
+            termsToUpdate.forEach((t) => {
+              const fIdx = updated.findIndex(
+                (fa) =>
+                  fa.studentId === st.id &&
+                  fa.academicSession === session &&
+                  fa.term === t &&
+                  fa.feeCategoryId === schoolFeeCat.id
+              );
+              if (fIdx >= 0) {
+                updated[fIdx] = { ...updated[fIdx], amount };
+              } else {
+                updated.push({
+                  id: `fa-${Date.now()}-${Math.random().toString(36).substr(2, 4)}`,
+                  studentId: st.id,
+                  academicSession: session,
+                  term: t,
+                  feeCategoryId: schoolFeeCat.id,
+                  feeCategoryName: schoolFeeCat.name,
+                  amount,
+                });
+              }
+            });
+          });
+          return updated;
+        });
+      }
+    }
+
+    logAudit(
+      'Class Fee Updated',
+      `${className} (${session})`,
+      `Set school fees price to ₦${amount.toLocaleString()} for ${className} in session ${session}`,
+      'info',
+      'COLUMN'
+    );
+    notify(`Saved school fees price for ${className} (${session}): ₦${amount.toLocaleString()}`, 'success');
+  };
+
+  const batchSetClassFeePrices = (
+    session: string,
+    prices: { classId: string; amount: number; term?: string }[],
+    applyToStudents: boolean = true
+  ) => {
+    const schoolFeeCat = feeCategories.find((c) => c.name === 'School Fees') || feeCategories[0];
+
+    setClassFeePricings((prev) => {
+      let updated = [...prev];
+      prices.forEach((item) => {
+        const targetClass = classes.find((c) => c.id === item.classId);
+        const className = targetClass?.name || item.classId;
+        const section = targetClass?.section || 'PRIMARY';
+        const term = item.term || 'ALL';
+
+        const existingIndex = updated.findIndex(
+          (p) =>
+            p.classId === item.classId &&
+            p.academicSession === session &&
+            (p.term === term || (!p.term && term === 'ALL'))
+        );
+        const entry: ClassFeePricing = {
+          id: `${item.classId}_${session}_${term}`,
+          classId: item.classId,
+          className,
+          section,
+          academicSession: session,
+          term,
+          tuitionFee: item.amount,
+          totalFee: item.amount,
+          lastUpdated: new Date().toISOString(),
+        };
+        if (existingIndex >= 0) {
+          updated[existingIndex] = entry;
+        } else {
+          updated.push(entry);
+        }
+      });
+      return updated;
+    });
+
+    if (applyToStudents && schoolFeeCat) {
+      setFeeAssignments((prev) => {
+        let updated = [...prev];
+        prices.forEach((item) => {
+          const enrolled = students.filter((s) => s.classId === item.classId && s.status === 'Active');
+          const term = item.term || 'ALL';
+          const termsToUpdate = term === 'ALL' ? ['First Term', 'Second Term', 'Third Term'] : [term];
+
+          enrolled.forEach((st) => {
+            termsToUpdate.forEach((t) => {
+              const idx = updated.findIndex(
+                (fa) =>
+                  fa.studentId === st.id &&
+                  fa.academicSession === session &&
+                  fa.term === t &&
+                  fa.feeCategoryId === schoolFeeCat.id
+              );
+              if (idx >= 0) {
+                updated[idx] = { ...updated[idx], amount: item.amount };
+              } else {
+                updated.push({
+                  id: `fa-${Date.now()}-${Math.random().toString(36).substr(2, 4)}`,
+                  studentId: st.id,
+                  academicSession: session,
+                  term: t,
+                  feeCategoryId: schoolFeeCat.id,
+                  feeCategoryName: schoolFeeCat.name,
+                  amount: item.amount,
+                });
+              }
+            });
+          });
+        });
+        return updated;
+      });
+    }
+
+    logAudit(
+      'Batch Class Fees Configured',
+      `${prices.length} Classes (${session})`,
+      `Configured and applied manual school fees pricing across ${prices.length} classes for session ${session}`,
+      'info',
+      'COLUMN'
+    );
+    notify(`Saved school fees prices for ${prices.length} classes in session ${session}!`, 'success');
   };
 
   // Student Financial Calculations (Session & Term-aware)
@@ -1039,6 +1285,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         addStudent,
         updateStudent,
         deleteStudent,
+        clearStudentName,
         bulkAddStudents,
         parents,
         addOrUpdateParent,
@@ -1047,6 +1294,10 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         addFeeCategory,
         updateFeeCategory,
         deleteFeeCategory,
+        classFeePricings,
+        setClassFeePrice,
+        batchSetClassFeePrices,
+        getClassFeePrice,
         feeAssignments,
         setStudentFeeAmount,
         bulkAssignClassFees,

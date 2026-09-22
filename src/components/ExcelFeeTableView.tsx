@@ -9,10 +9,13 @@ import {
   RefreshCw,
   PlusCircle,
   HelpCircle,
+  Trash2,
 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
+import { Student } from '../types';
 import { formatNaira, formatNumber } from '../utils/formatters';
 import { exportToExcel, exportToCSV } from '../utils/exportUtils';
+import { ClearOrDeleteStudentModal } from './ClearOrDeleteStudentModal';
 
 export const ExcelFeeTableView: React.FC = () => {
   const {
@@ -37,6 +40,7 @@ export const ExcelFeeTableView: React.FC = () => {
   const [newColName, setNewColName] = useState<string>('');
   const [newColAmount, setNewColAmount] = useState<string>('15000');
   const [showAddColModal, setShowAddColModal] = useState<boolean>(false);
+  const [actionStudent, setActionStudent] = useState<Student | null>(null);
 
   // Filtered student list
   const filteredStudents = useMemo(() => {
@@ -474,6 +478,16 @@ export const ExcelFeeTableView: React.FC = () => {
                           >
                             <Eye className="w-3.5 h-3.5" />
                           </button>
+                          {hasPermission('deleteStudent') && (
+                            <button
+                              id={`btn-table-clear-delete-${st.id}`}
+                              onClick={() => setActionStudent(st)}
+                              className="p-1.5 rounded-lg bg-rose-50 text-rose-600 hover:bg-rose-100 transition-colors"
+                              title="Clear Name or Delete Student"
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                            </button>
+                          )}
                         </div>
                       </td>
                     </tr>
@@ -581,6 +595,14 @@ export const ExcelFeeTableView: React.FC = () => {
             </form>
           </div>
         </div>
+      )}
+
+      {/* Clear or Delete Student Modal */}
+      {actionStudent && (
+        <ClearOrDeleteStudentModal
+          student={actionStudent}
+          onClose={() => setActionStudent(null)}
+        />
       )}
     </div>
   );

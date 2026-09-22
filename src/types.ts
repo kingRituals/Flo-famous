@@ -111,6 +111,19 @@ export interface FeeCategory {
   applicableClassId?: string | 'ALL';
 }
 
+export interface ClassFeePricing {
+  id: string; // e.g. `${classId}_${academicSession}_${term || 'ALL'}`
+  classId: string;
+  className: string;
+  section: SchoolSection;
+  academicSession: string; // e.g. '2026/2027'
+  term?: string; // 'First Term' | 'Second Term' | 'Third Term' | 'ALL'
+  tuitionFee: number; // Base School Fees / Tuition amount
+  otherFees?: { [feeCategoryId: string]: number };
+  totalFee: number;
+  lastUpdated?: string;
+}
+
 export interface StudentFeeAssignment {
   id: string;
   studentId: string;
